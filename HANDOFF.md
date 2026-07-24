@@ -4,9 +4,22 @@ Operational handoff covering **all three repos**. This same file lives in each r
 
 ---
 
+## ⚠️ CURRENT STATE (2026-07-24) — read this first; it supersedes stale details below
+
+- **Live MO sheet ID is `1FTVqNw9voQ6Bkk1US_nv_PVx50Uc1TWIGyxGUJNknnU`** (set via `MO_SHEET_ID` on Render). The old `152hyxQz…` id below is the **DEAD pre-reorg sheet** — never use it. Both services now hard-fail on startup if `MO_SHEET_ID` is unset rather than falling back to it.
+- **System is live and doing real work** — HubSpot, Google (Drive/Sheets/Gmail DWD), Claude, Resend all configured on Render. The "everything returns `skipped` by design / this is config-only, don't touch code" framing below is **obsolete**.
+- **Leucrocotta is push-driven**, not a 15-min cron: Gmail Pub/Sub → `POST /leucrocotta/gmail-webhook/:secret` → `runInboxPoll`. A `leucrocotta-watch-renew` cron re-registers the Gmail `watch()` every 6 days (it expires in ≤7). `/leucrocotta/poll` is a manual fallback.
+- **Order-doc sheet layout is 58 columns**, and the layout is now a **single source of truth in `mo-sheet.js`** (duplicated verbatim in both server repos, like `doc-render.js`) — the two writers + the portal reader all derive column positions from it. The "46-column layout, duplicated, leave as-is" note below is obsolete.
+- **Status ladder**: Awaiting Approval → Awaiting Payment → Pending (paid) → In Transit → Delivered, and status writes are now **monotonic** (never regress).
+- **Hermes poll is bounded**: `generateDocument` clears the `zc_trigger_oc`/`zd_trigger_invoice` checkbox after a successful generate, so the hourly poll only processes freshly-toggled deals (previously it re-generated every flagged deal every run and timed the cron out).
+- **Retired**: the social-drafting poll (now a Claude Project). Delete the orphaned `social-poll` Render cron if still provisioned.
+- Full change detail lives in the `project_mayor_agent.md` agent-memory file.
+
+---
+
 ## The system
 
-Order-lifecycle automation for Mayor Clothing. **HubSpot** is the system of record; a **Google Sheet** ("MO sheet", ID `152hyxQz87IwPYl2lgBCm6pKKSjYl1hoL-AuZu-wODbo`) + **Google Drive** hold order state and generated docs; **Resend/Gmail** send mail; **Claude** drafts replies; **Nickel** handles payments.
+Order-lifecycle automation for Mayor Clothing. **HubSpot** is the system of record; a **Google Sheet** ("MO sheet" — live id in the Current State box above; the `152hyxQz…` id here is the dead pre-reorg one) + **Google Drive** hold order state and generated docs; **Resend/Gmail** send mail; **Claude** drafts replies; **Nickel** handles payments.
 
 | Repo | Role | Hosted |
 |------|------|--------|
@@ -73,8 +86,6 @@ Express **5**. Renders invoice PDFs and serves a customer-facing order portal.
 | `RESEND_API_KEY` | portal password-reset / notification mail |
 | `BASE_URL` | defaults to `https://orders.mayorclothing.com` |
 | `PORT` | Render sets it |
-| `UPS_CLIENT_ID` / `UPS_CLIENT_SECRET` | OAuth client-credentials app from developer.ups.com (register a Tracking API app). Powers live "UPS Status" on the order detail page. |
-| `UPS_ENV` | `test` → CIE sandbox host; anything else (or unset) → production. |
 
 **Run locally**: `npm install && node index.js` (→ `:3000`). **No test suite** (`npm test` is a placeholder that errors).
 
@@ -109,19 +120,3 @@ As each is added the corresponding poll stops saying `skipped` and starts acting
 - **Hermes idempotency** is in-memory and resets on restart; the persistent backstop is the MO-sheet row (the poll gates on it). Fine unless restarts cause churn.
 - **Duplicated code**: `doc-render.js` exists in both `mayor-email-backend` and `mayor-invoice`; the MO-sheet detail-row layout is duplicated inside `googleStore.js`. Left as-is (marked `ponytail:`) — consolidate only if they diverge.
 - **Stale local node servers**: several background `node.exe` processes can linger and answer on ports, giving misleading test results. Kill them before local smoke tests.
-- **Portal session expires fast**: the `mayor_token` JWT cookie logs you out on a plain page refresh (F5 / hard reload) far sooner than you'd expect from casual use. Don't refresh the tab to "check something live" — open a fresh tab instead (shares the session cookie) or just re-sign-in. Root cause (exact `JWT_SECRET` expiry setting) not yet tracked down.
-
----
-
-## Session — 2026-07-23: full-system audit + portal UI fixes
-
-**Audit** (all three repos, live Render, live sheet, HubSpot, browser): every finding from `MAYOR-SECURITY-AUDIT.md` (2026-07-10) is fixed and verified still in place on `main` — checked source directly, not just the remediation doc's claims (JWT_SECRET throws at boot, `/generate` sanitizes payload, portal escapes all sheet-sourced HTML, HubSpot HMAC fixed + `trust proxy` set, formula-injection guard on every sheet write, auth rate limiting). Both Render web services live and healthy. Still open (need a human, not code): Turnstile/bot-check on `/generate` (declined for now), Google Workspace domain-wide-delegation scope tightening.
-
-**Fixed this session** (`mayor-invoice`, all pushed to `main` + deployed):
-1. `portal.html` — redesigned the UPS tracking timeline (bigger ringed dots, solid connector, highlighted latest event, dropped a redundant status badge) — this was the "ugly, needs a design pass" item from 2026-07-21.
-2. `portal.js` `getOrderDetailData` print_background fix (from a prior session) — confirmed live and working end-to-end in the browser, not just in code.
-3. Line-item images: some historical `Order Confirmations` rows have the Shopify **product-page URL** pasted into the `Product 1..5` sheet columns instead of an actual image file (verified directly against the live sheet — e.g. order 29811). `hermesMapping.js`/`portal.js` only check "is it https", not "is it an image", so this rendered a broken-image icon. `portal.html` now only renders `<img>` when the URL looks like an image file (extension check); otherwise falls back to a plain "View" link. The underlying bad sheet cells are a data problem, not a code one — fix at the source if it recurs.
-4. Background bug: `showPage()` reset `backgroundImage`/`backgroundSize`/`backgroundColor` when leaving the order-detail page, but not the `backgroundRepeat:no-repeat` / `backgroundPosition:center` also set by the custom-print-background code — those leaked as inline styles and broke the default tiled background (showed one tiny centered instance instead of a full tile). Now resets all five properties.
-5. Hairline seam across the tiled background patterns (auth-bg-1/2/3.png), repeating every ~297px down the page. Cause: `background-size: 950px auto` scales each image proportionally, and none of the three PNGs have a whole-pixel height at that width (e.g. auth-bg-1.png is 1725×540 → auto computes 297.4px), so each tiled repeat rounds independently and drifts out of alignment. Fixed by pinning both dimensions to whole pixels per image (950×297, 950×296, 950×295).
-
-**Debugging note for next session**: the browser's disk cache reliably serves stale JS/CSS after a deploy even on a "fresh" new tab at the same URL — verify a fix actually landed by checking `document.documentElement.outerHTML` for the expected new code, not just by looking at the page. A cache-busting query string (`?_cb=<anything>`) forces a real fetch without triggering the fast session-expiry issue above the way F5 does.

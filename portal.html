@@ -864,12 +864,13 @@ async function showOrder(idx) {
 
     let html = '';
 
-    // Line items table header: product pic, description, quantity, price
-    html += `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr; gap:0 10px; border-bottom:2px solid #1a1a18; padding-bottom:6px; margin-bottom:4px;">
+    // Line items table header: product pic, description, quantity, price, amount
+    html += `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr 1fr; gap:0 10px; border-bottom:2px solid #1a1a18; padding-bottom:6px; margin-bottom:4px;">
       <span style="font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.05em;">Item</span>
       <span style="font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.05em;">Description</span>
       <span style="font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.05em; text-align:center;">Quantity</span>
       <span style="font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.05em; text-align:right;">Price</span>
+      <span style="font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.05em; text-align:right;">Amount</span>
     </div>`;
 
     (d.line_items || []).forEach(item => {
@@ -910,7 +911,9 @@ async function showOrder(idx) {
           </table>`
         : '';
 
-      html += `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr; gap:0 10px; padding:10px 0; border-bottom:1px solid #f0f0ee; align-items:start;">
+      // Amount = price x quantity for this product.
+      const itemAmount = Number(item.amount) || (Number(item.quantity) * Number(item.price)) || 0;
+      html += `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr 1fr; gap:0 10px; padding:10px 0; border-bottom:1px solid #f0f0ee; align-items:start;">
         <div>${imgHTML}</div>
         <div>
           ${desc ? `<div style="font-size:12px; color:#666; white-space:pre-line; line-height:1.5;">${esc(desc)}</div>` : ''}
@@ -919,6 +922,7 @@ async function showOrder(idx) {
         </div>
         <div style="font-size:13px; text-align:center;">${esc(item.quantity)}</div>
         <div style="font-size:13px; text-align:right;">${priceHTML}</div>
+        <div style="font-size:13px; text-align:right;">${fmtMoney(itemAmount)}</div>
       </div>`;
     });
 
@@ -956,9 +960,10 @@ async function showOrder(idx) {
     const embForTotal = d.strike_embroidery ? 0 : embVal;
     const artForTotal = d.strike_art ? 0 : artVal;
     const shipForTotal = d.strike_shipping ? 0 : (Number(d.shipping) || 0);
+    const rushForTotal = Number(d.rush_fee) || 0;
     const effectiveTotal = d.total && Number(d.total) > 0
       ? Number(d.total)
-      : effectiveSubtotal + shipForTotal + customLabelVal + embForTotal + artForTotal - reimbAmt;
+      : effectiveSubtotal + shipForTotal + customLabelVal + rushForTotal + embForTotal + artForTotal - reimbAmt;
 
     const totalQty = (d.line_items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
 
@@ -966,9 +971,10 @@ async function showOrder(idx) {
     // key/value totRow rows below it) so its quantity lands directly under the
     // Quantity column header -- that alignment, not any label text, is what
     // marks it as the subtotal quantity.
-    const subtotalRow = `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr; gap:0 10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:center;">
+    const subtotalRow = `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr 1fr; gap:0 10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:center;">
       <span class="detail-key" style="grid-column:1 / 3;">Subtotal</span>
       <span style="text-align:center; font-weight:500;">${totalQty}</span>
+      <span></span>
       <span class="detail-val">${fmtMoney(effectiveSubtotal)}</span>
     </div>`;
 
@@ -978,6 +984,7 @@ async function showOrder(idx) {
       ${totRow('Art Setup', artHTML)}
       ${customLabelRow}
       ${totRow('Shipping', fmtMoney(d.shipping))}
+      ${rushForTotal ? totRow('Rush Fee', fmtMoney(rushForTotal)) : ''}
       ${reimbRow}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}
     </div>`;

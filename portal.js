@@ -263,6 +263,7 @@ function parseSheetRow(row) {
     art_setup:         artNum,
     sample_reimbursement: row[COL.sample_reimbursement] || null,
     custom_label:      row[COL.custom_label] ? parseCurrency(row[COL.custom_label]) : null,
+    rush_fee:          row[COL.rush_fee] ? parseCurrency(row[COL.rush_fee]) : null,
     shipping:          parseCurrency(row[COL.shipping]),
     total:             parseCurrency(row[COL.total]),
     payment_link:      row[COL.payment_link] || '',

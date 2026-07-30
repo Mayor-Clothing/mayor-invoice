@@ -148,6 +148,7 @@ async function appendOrderToSheet(data) {
       strike_embroidery: data.strike_embroidery ? '1' : '', strike_art: data.strike_art ? '1' : '', strike_shipping: data.strike_shipping ? '1' : '',
       orig_price_1: get(0,'orig_price'), orig_price_2: get(1,'orig_price'), orig_price_3: get(2,'orig_price'), orig_price_4: get(3,'orig_price'), orig_price_5: get(4,'orig_price'),
       drive_pdf_link: '', // set by the backend's Drive upload; blank when written here
+      rush_fee: data.rush_fee || '',
     });
 
     // Upsert keyed on the stable deal_id (fallback order_number), so a renamed

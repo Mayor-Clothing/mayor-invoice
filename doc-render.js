@@ -58,7 +58,7 @@ async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
     payment_link = '', payment_link_2 = '', w9_link = DEFAULT_W9,
     line_items = [], subtotal = 0, embroidery, art_setup, strike_embroidery = true, strike_art = true,
     shipping = 0, strike_shipping = false, sample_reimbursement = null,
-    custom_label = null, payment_terms = '', total = 0
+    custom_label = null, rush_fee = null, payment_terms = '', total = 0
   } = data;
 
   return await new Promise((resolve, reject) => {
@@ -220,7 +220,9 @@ async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
         doc.fontSize(8.5).font('Times-Roman').fillColor('#1a1a18');
         if (imgBuf) {
           try {
-            doc.image(imgBuf, cP + 3, ry + 5, { width: imgSize, height: imgSize, link: data.product_page || '' });
+            // Fill the product cell top-to-bottom so the polo runs the full row
+            // height instead of a small thumbnail with dead space beneath it.
+            doc.image(imgBuf, cP + 3, ry + 4, { width: pW - 6, height: rowH - 8, link: data.product_page || '' });
           } catch (e) {
             doc.text(item.product || '', cP + 3, ry + 7, { width: pW - 6, underline: false });
           }
@@ -281,8 +283,10 @@ async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
       const drawRow = (label, value, strike = false) => {
         const rH = 17;
         doc.rect(rightX, ry, rightW, rH).lineWidth(0.4).stroke('#cccccc');
+        // Labels right-align to the Description column edge so every totals title
+        // (Embroidery, Art Setup, Shipping, Rush Fee, Total) lines up under Subtotal.
         doc.fontSize(8.5).font('Times-Bold').fillColor('#1a1a18')
-           .text(label, cPr - 55, ry + 5, { width: 55 + prW, align: 'right' });
+           .text(label, cD, ry + 5, { width: dW, align: 'right' });
         doc.font('Times-Roman').text(value, cA, ry + 5, { width: aW - 2, align: 'right' });
         if (strike) {
           const tw = doc.widthOfString(value);
@@ -312,9 +316,10 @@ async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
       const shipForTotal = strike_shipping ? 0 : num(shipping);
       const reimbForTotal = num(sample_reimbursement); // stored as "(x)" credit
       const customForTotal = num(custom_label);
+      const rushForTotal = num(rush_fee);
       const effectiveTotal = total && Number(total) > 0
         ? Number(total)
-        : effectiveSubtotal + shipForTotal + customForTotal + embForTotal + artForTotal - reimbForTotal;
+        : effectiveSubtotal + shipForTotal + customForTotal + rushForTotal + embForTotal + artForTotal - reimbForTotal;
 
       const qtyTotal = line_items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
       doc.rect(rightX, ry, rightW, 17).lineWidth(0.4).stroke('#cccccc');
@@ -337,13 +342,14 @@ async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
       }
       if (custom_label) drawRow('Custom Main Label', fmtMoney(custom_label));
       drawRow('Shipping', fmtMoney(shipping), strike_shipping);
+      if (rush_fee && num(rush_fee) !== 0) drawRow('Rush Fee', fmtMoney(rush_fee));
       if (sample_reimbursement) drawRow('Sample Reimbursement', sample_reimbursement);
 
       // Total
       const totH = 18;
       doc.rect(rightX, ry, rightW, totH).lineWidth(0.4).stroke('#cccccc');
       doc.fontSize(9).font('Times-Bold').fillColor('#1a1a18')
-         .text('Total', cPr - 55, ry + 5, { width: 55 + prW, align: 'right' })
+         .text('Total', cD, ry + 5, { width: dW, align: 'right' })
          .text(fmtMoney(effectiveTotal), cA, ry + 5, { width: aW - 2, align: 'right' });
 
       // ── FOOTER ──

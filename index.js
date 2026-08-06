@@ -62,7 +62,7 @@ const LOGO_PATH = __dirname + '/Mayor_Logo_transparent.png';
 function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v; }
 // Status is monotonic — never regress an order (paid/shipped/delivered) back to
 // Awaiting Payment when its invoice is regenerated. Mirrors googleStore.js.
-const STATUS_RANK = { 'awaiting approval': 1, 'awaiting payment': 2, 'pending': 3, 'paid': 3, 'in transit': 4, 'shipped': 4, 'delivered': 5 };
+const STATUS_RANK = { 'awaiting customer approval': 1, 'awaiting payment': 2, 'pending': 3, 'paid': 3, 'in transit': 4, 'shipped': 4, 'delivered': 5 };
 const statusRank = (s) => STATUS_RANK[String(s || '').trim().toLowerCase()] || 0;
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
@@ -181,7 +181,7 @@ async function appendOrderToSheet(data) {
       if (infoIdx < 1) {
         await writeToSheet('Order Info',  data.order_number,
           [data.order_number || '', data.club || '', data.ship_date || '',
-           data.customer_email || '', 'Awaiting Approval', '', '', dealId].map(sheetSafe));
+           data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId].map(sheetSafe));
       } else if (normalizeOrderNumber((infoRows[infoIdx] || [])[0]) !== normalizeOrderNumber(data.order_number)) {
         // Rename: update order_number (A) in place on the deal_id-matched row.
         await sheets.spreadsheets.values.update({

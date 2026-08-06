@@ -128,7 +128,7 @@ Only B/C/D permute (club/ship_date/email). **Status stays E, tracking stays F, d
 
 **`index.js`:**
 - `appendOrderToSheet()` `rowData` (120–142): rebuild in Block 1–4 order and length, including the new `sizes` columns. `get(i,'sizes')` returns `''` for direct/mayor-tools-originated orders that don't send sizes separately (non-breaking blank column).
-- Order Info write array (181–182): reorder to `[order_number, club, ship_date, customer_email, 'Awaiting Approval', '', '', '']`.
+- Order Info write array (181–182): reorder to `[order_number, club, ship_date, customer_email, 'Awaiting Customer Approval', '', '', '']`.
 - Status-only write (203–205) and the whole `writeToSheet` row-finder: unchanged (still `Order Info!E`, still writes the full row from column A).
 
 **`doc-render.js`:**

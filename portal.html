@@ -565,43 +565,6 @@ async function loadOrders() {
   }
 }
 
-// True when a description has more than one line carrying its own size
-// breakdown (e.g. one line per color: "Crimson - M: 1, L: 1..." / "Navy - M: 1...").
-// parseSizes/stripSizes below assume a single size list for the whole item --
-// on multi-color text they instead extract one size's LAST-seen count (silently
-// dropping every other color's numbers) and leave dangling ",," fragments where
-// tokens were stripped mid-line. Safer to leave that text untouched and let the
-// customer read the sheet's own wording than to render a wrong, garbled summary.
-function hasMultipleSizeGroups(desc) {
-  const sizeLine = /(XS|3XL|XXL|XL|S|M|L):\s*\d+/;
-  return (desc || '').split('\n').filter(line => sizeLine.test(line)).length > 1;
-}
-
-function parseSizes(desc) {
-  if (hasMultipleSizeGroups(desc)) return [];
-  const order = ['XS','S','M','L','XL','XXL','3XL'];
-  const found = {};
-  // Match size labels only when preceded by start, space, comma, or dash — not mid-word
-  const pattern = /(?:^|[\s,\-–\/])((XS|3XL|XXL|XL|S|M|L)):\s*(\d+)/g;
-  let match;
-  while ((match = pattern.exec(desc)) !== null) {
-    found[match[2].toUpperCase()] = match[3];
-  }
-  return order.filter(s => found[s]).map(s => [s, found[s]]);
-}
-
-function stripSizes(desc) {
-  if (hasMultipleSizeGroups(desc)) return desc; // show the sheet's own multi-color/size text as-is
-  // Remove size tokens like "S: 2" only when preceded by start, space, comma, or dash
-  return desc
-    .replace(/(?:^|[\s,\-–\/])(XS|3XL|XXL|XL|S|M|L):\s*\d+/g, '')
-    .replace(/\s*[-–]\s*/g, ' ')
-    .replace(/,\s*,/g, ',')
-    .replace(/^[\s,\-–]+|[\s,\-–]+$/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
 function fmtMoney(n) {
   const num = Number(n) || 0;
   const hasCents = Math.round(num * 100) % 100 !== 0;
@@ -871,15 +834,11 @@ async function showOrder(idx) {
     </div>`;
 
     (d.line_items || []).forEach(item => {
-      // The sheet has a dedicated Sizes column per item (parseSheetRow already
-      // reads it into item.sizes) -- prefer that clean value over re-deriving
-      // sizes from the description text. Only fall back to parsing the
-      // description when Sizes is blank (older rows that predate the sheet
-      // reorg's sizes/description split), since that's the only place those
-      // rows have it.
-      const rawSizes = (item.sizes || '').trim();
-      const sizes = rawSizes ? parseSizes(rawSizes) : parseSizes(item.description || '');
-      const desc  = rawSizes ? (item.description || '') : stripSizes(item.description || '');
+      // Same merge doc-render.js uses for the PDF (descText, line ~199) -- sizes
+      // joined onto the description as plain text instead of a separate table.
+      // Legacy rows with no dedicated Sizes column already have sizes embedded
+      // in the description text, so item.sizes is blank and the join is a no-op.
+      const descText = [item.description || '', (item.sizes || '').trim()].filter(Boolean).join('\n');
       const priceHTML = item.orig_price && Number(item.orig_price) > 0
         ? `<span style="text-decoration:line-through; color:#aaa; display:block; font-size:12px;">${fmtMoney(item.orig_price)}</span><span>${fmtMoney(item.price)}</span>`
         : fmtMoney(item.price);
@@ -903,16 +862,10 @@ async function showOrder(idx) {
           // No product photo/link at all -- name the item from the URL cell (or the
           // generic fallback) instead of leaving this column blank. The Item column
           // is widened (see the grid-template-columns below) so this fits on one line.
-          : ((desc || (!isUrlCell && rawCell)) ? `<span style="font-size:12px; color:#666;">${esc(nameLabel)}</span>` : ''));
+          : ((descText || (!isUrlCell && rawCell)) ? `<span style="font-size:12px; color:#666;">${esc(nameLabel)}</span>` : ''));
       const productLink = safeUrl(d.product_page);
       const productLinkHTML = productLink
         ? `<div style="font-size:12px; margin-top:2px;"><a href="${esc(productLink)}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Additional Details</a></div>`
-        : '';
-
-      const sizesTableHTML = sizes.length
-        ? `<table style="margin-top:6px; border-collapse:collapse; font-size:12px; color:#888;">
-            ${sizes.map(([s, q]) => `<tr><td style="padding:1px 8px 1px 0; font-weight:500; color:#666;">${esc(s)}</td><td style="padding:1px 0;">${esc(q)}</td></tr>`).join('')}
-          </table>`
         : '';
 
       // Amount = price x quantity for this product.
@@ -920,8 +873,7 @@ async function showOrder(idx) {
       html += `<div style="display:grid; grid-template-columns:140px 2fr 1fr 1fr 1fr; gap:0 10px; padding:10px 0; border-bottom:1px solid #f0f0ee; align-items:start;">
         <div>${imgHTML}</div>
         <div>
-          ${desc ? `<div style="font-size:12px; color:#666; white-space:pre-line; line-height:1.5;">${esc(desc)}</div>` : ''}
-          ${sizesTableHTML}
+          ${descText ? `<div style="font-size:12px; color:#666; white-space:pre-line; line-height:1.5;">${esc(descText)}</div>` : ''}
           ${productLinkHTML}
         </div>
         <div style="font-size:13px; text-align:center;">${esc(item.quantity)}</div>

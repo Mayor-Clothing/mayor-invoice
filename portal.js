@@ -215,13 +215,13 @@ function parseSheetRow(row) {
   // reader can't drift out of lockstep with the layout (F7).
   const items = [];
   const slots = [
-    ['p1_url', 'p1_desc', 'p1_sizes', 'p1_qty', 'p1_price', 'orig_price_1'],
-    ['p2_url', 'p2_desc', 'p2_sizes', 'p2_qty', 'p2_price', 'orig_price_2'],
-    ['p3_url', 'p3_desc', 'p3_sizes', 'p3_qty', 'p3_price', 'orig_price_3'],
-    ['p4_url', 'p4_desc', 'p4_sizes', 'p4_qty', 'p4_price', 'orig_price_4'],
-    ['p5_url', 'p5_desc', 'p5_sizes', 'p5_qty', 'p5_price', 'orig_price_5'],
+    ['p1_url', 'p1_desc', 'p1_sizes', 'p1_qty', 'p1_price', 'orig_price_1', 'p1_product_page', 'p1_mockup'],
+    ['p2_url', 'p2_desc', 'p2_sizes', 'p2_qty', 'p2_price', 'orig_price_2', 'p2_product_page', 'p2_mockup'],
+    ['p3_url', 'p3_desc', 'p3_sizes', 'p3_qty', 'p3_price', 'orig_price_3', 'p3_product_page', 'p3_mockup'],
+    ['p4_url', 'p4_desc', 'p4_sizes', 'p4_qty', 'p4_price', 'orig_price_4', 'p4_product_page', 'p4_mockup'],
+    ['p5_url', 'p5_desc', 'p5_sizes', 'p5_qty', 'p5_price', 'orig_price_5', 'p5_product_page', 'p5_mockup'],
   ];
-  for (const [u, d, s, q, p, o] of slots) {
+  for (const [u, d, s, q, p, o, pp, mk] of slots) {
     const qty   = parseCurrency(row[COL[q]]);
     const price = parseCurrency(row[COL[p]]);
     if (qty > 0) {
@@ -233,6 +233,8 @@ function parseSheetRow(row) {
         quantity:   qty,
         price:      price,
         orig_price: row[COL[o]] ? parseCurrency(row[COL[o]]) : null,
+        product_page: row[COL[pp]] || '',   // per-item "Additional Details" link
+        mockup:     row[COL[mk]] || '',      // per-item mockup image
         amount:     qty * price
       });
     }
@@ -287,8 +289,8 @@ async function getOrderDetailData(order_number) {
   const target = normalizeOrderNumber(order_number);
 
   const [invRes, confRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Invoices!A:BF' }),
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Confirmations!A:BF' }),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Invoices!A:BZ' }),
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Confirmations!A:BZ' }),
   ]);
   const invRow = (invRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === target);
   const confRow = (confRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === target);
@@ -507,7 +509,7 @@ router.get('/confirmation/:order_number', requireAuth, async (req, res) => {
       // Full range through BF — parseSheetRow reads fields (embroidery, payment_terms,
       // sizes, orig_price, drive_pdf_link, etc.) from columns well past the line
       // items; a narrower range silently dropped them from the PDF.
-      range: 'Order Confirmations!A:BF',
+      range: 'Order Confirmations!A:BZ',
     });
     const confRow = (confRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!confRow) return res.status(404).json({ error: 'Order confirmation not available.' });
@@ -541,7 +543,7 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
     const sheets = await getSheets();
     const invRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Invoices!A:BF', // see comment on the Order Confirmations read above
+      range: 'Invoices!A:BZ', // see comment on the Order Confirmations read above
     });
     const invRow = (invRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!invRow) return res.status(404).json({ error: 'Invoice not available yet. Your order confirmation is still being reviewed.' });

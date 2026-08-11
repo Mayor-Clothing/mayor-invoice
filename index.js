@@ -82,7 +82,7 @@ function sanitizeGeneratePayload(data) {
   d.payment_link = trustedPaymentLink(d.payment_link);
   d.payment_link_2 = trustedPaymentLink(d.payment_link_2);
   d.product_page = httpsUrlOrEmpty(d.product_page);
-  d.line_items = (Array.isArray(d.line_items) ? d.line_items : []).slice(0, 10).map((it) => ({ ...(it || {}), url: httpsUrlOrEmpty(it && it.url) }));
+  d.line_items = (Array.isArray(d.line_items) ? d.line_items : []).slice(0, 10).map((it) => ({ ...(it || {}), url: httpsUrlOrEmpty(it && it.url), product_page: httpsUrlOrEmpty(it && it.product_page), mockup: httpsUrlOrEmpty(it && it.mockup) }));
   return d;
 }
 
@@ -149,6 +149,8 @@ async function appendOrderToSheet(data) {
       orig_price_1: get(0,'orig_price'), orig_price_2: get(1,'orig_price'), orig_price_3: get(2,'orig_price'), orig_price_4: get(3,'orig_price'), orig_price_5: get(4,'orig_price'),
       drive_pdf_link: '', // set by the backend's Drive upload; blank when written here
       rush_fee: data.rush_fee || '',
+      p1_product_page: get(0,'product_page'), p2_product_page: get(1,'product_page'), p3_product_page: get(2,'product_page'), p4_product_page: get(3,'product_page'), p5_product_page: get(4,'product_page'),
+      p1_mockup: get(0,'mockup'), p2_mockup: get(1,'mockup'), p3_mockup: get(2,'mockup'), p4_mockup: get(3,'mockup'), p5_mockup: get(4,'mockup'),
     });
 
     // Upsert keyed on the stable deal_id (fallback order_number), so a renamed

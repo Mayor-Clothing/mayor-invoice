@@ -786,9 +786,10 @@ async function showOrder(idx) {
       swatchProbe.src = bgUrl;
     }
 
-    document.getElementById('detail-items-label').textContent =
-      'Order Details';
-
+    // (The "Order Details" section header was intentionally removed per Matt's
+    // feedback; do NOT reintroduce a getElementById('detail-items-label') here —
+    // that element no longer exists and referencing it threw, which sent the
+    // whole detail render into the catch below and blanked every order page.)
     const infoEl = document.getElementById('detail-info');
 
     // In-hand date, directly under Ship Date on the left

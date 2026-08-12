@@ -609,12 +609,15 @@ const DEFAULT_W9 = 'https://drive.google.com/file/d/1iZD_sP2WQbfPrXkHIcPqf7XawDM
 // portal page and the PDF always read the same.
 function buildTermsHTML(d) {
   const isSplitPayment = !!(safeUrl(d.payment_link_2));
+  // Match doc-render.js: "club/clubs" for club accounts, "client/clients" otherwise.
+  const isClub = /club/i.test(d.club || '');
+  const tail = `Based on our custom model, garments are produced specially for each ${isClub ? 'club' : 'client'}. Once ${isClub ? 'clubs' : 'clients'} approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. `;
   let termsText;
   if (d.payment_terms && d.payment_terms.trim()) {
-    termsText = d.payment_terms.trim().replace(/\.$/, '') + '. Based on our custom model, garments are produced specially for each customer. Once customers approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. ';
+    termsText = d.payment_terms.trim().replace(/\.$/, '') + '. ' + tail;
   } else {
     const leadIn = isSplitPayment ? '50% deposit, 50% on receipt. ' : 'Due on receipt. ';
-    termsText = leadIn + 'Based on our custom model, garments are produced specially for each customer. Once customers approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. ';
+    termsText = leadIn + tail;
   }
   const w9 = /^https:/.test(d.w9_link || '') ? d.w9_link : DEFAULT_W9;
   return esc(termsText) + `<a href="${esc(w9)}" target="_blank" rel="noopener noreferrer" style="color:inherit;">Here</a> is our W-9.`;

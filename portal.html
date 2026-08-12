@@ -598,10 +598,10 @@ function adminFlagBadges(o) {
   return flags.map(([cls, label]) => `<span class="badge ${cls}" style="margin-right:6px;">${label}</span>`).join('');
 }
 
-// "pending" reads like back-office jargon to a customer — show it as "In Progress".
+// Show the status exactly as set (the HubSpot Order Status dropdown) so the
+// customer, Matt's admin view, the sheet, and HubSpot all read identically.
 function displayStatus(status) {
-  const s = (status || '').trim();
-  return (!s || s.toLowerCase() === 'pending') ? 'In Progress' : s;
+  return (status || '').trim();
 }
 
 const DEFAULT_W9 = 'https://drive.google.com/file/d/1iZD_sP2WQbfPrXkHIcPqf7XawDMP2Zi1/view';

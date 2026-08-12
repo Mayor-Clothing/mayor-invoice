@@ -111,7 +111,7 @@ async function getOrdersFromSheet(email) {
       club:            r[1] || '',
       ship_date:       r[2] || '',
       email:           r[3] || '',
-      status:          r[4] || 'Awaiting Customer Approval',
+      status:          r[4] || 'Awaiting Approval',
       tracking_number: r[5] || '',
       date_delivered:  r[6] || '',
     }));
@@ -136,7 +136,7 @@ async function getAllOrdersFromSheet() {
       club:            r[1] || '',
       ship_date:       r[2] || '',
       email:           r[3] || '',
-      status:          r[4] || 'Awaiting Customer Approval',
+      status:          r[4] || 'Awaiting Approval',
       tracking_number: r[5] || '',
       date_delivered:  r[6] || '',
     }));

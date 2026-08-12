@@ -333,6 +333,7 @@
     </div>
 
     <div id="detail-terms-card" class="fine-print" style="display:none; margin-top:1rem;">
+      <p style="text-transform:uppercase; letter-spacing:0.06em; font-size:11px; margin:0 0 8px;">Payment Terms</p>
       <p id="detail-terms-text"></p>
     </div>
   </div>
@@ -800,7 +801,7 @@ async function showOrder(idx) {
     // Billing/shipping addresses on the left — only show Shipping Address separately if it differs
     const hasShipAddr = d.shipping_address && d.shipping_address.trim() && d.shipping_address.trim() !== (d.address || '').trim();
     const addrToHTML = (label, addr) => addr && addr.trim()
-      ? `<div class="detail-row" style="align-items:flex-start;"><span class="detail-key">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:right;">${esc(addr.trim())}</span></div>`
+      ? `<div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:4px;"><span class="detail-key">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:left; font-weight:400;">${esc(addr.trim())}</span></div>`
       : '';
     infoEl.innerHTML +=
       addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', d.address) +
@@ -815,7 +816,7 @@ async function showOrder(idx) {
     // been invoiced), otherwise the order confirmation.
     const hasPaymentLink = !!(safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
     const downloadBtn = document.getElementById('detail-download-btn');
-    downloadBtn.textContent = hasPaymentLink ? 'Download Invoice' : 'Download Order Confirmation';
+    downloadBtn.textContent = 'Download';
     downloadBtn.onclick = hasPaymentLink ? downloadInvoice : downloadConfirmation;
     document.getElementById('detail-download-card').style.display = 'block';
 

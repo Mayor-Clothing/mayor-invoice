@@ -958,7 +958,7 @@ async function showOrder(idx) {
       ${totRow('Embroidery', embHTML)}
       ${totRow('Art Setup', artHTML)}
       ${customLabelRow}
-      ${totRow('Shipping', fmtMoney(d.shipping))}
+      ${totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping))}
       ${rushForTotal ? totRow('Rush Fee', fmtMoney(rushForTotal)) : ''}
       ${reimbRow}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}

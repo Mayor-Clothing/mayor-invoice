@@ -609,9 +609,8 @@ const DEFAULT_W9 = 'https://drive.google.com/file/d/1iZD_sP2WQbfPrXkHIcPqf7XawDM
 // portal page and the PDF always read the same.
 function buildTermsHTML(d) {
   const isSplitPayment = !!(safeUrl(d.payment_link_2));
-  // Match doc-render.js: "club/clubs" for club accounts, "client/clients" otherwise.
-  const isClub = /club/i.test(d.club || '');
-  const tail = `Based on our custom model, garments are produced specially for each ${isClub ? 'club' : 'client'}. Once ${isClub ? 'clubs' : 'clients'} approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. `;
+  // Always "customer" (matches doc-render.js / the downloaded PDF).
+  const tail = 'Based on our custom model, garments are produced specially for each customer. Once customers approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. ';
   let termsText;
   if (d.payment_terms && d.payment_terms.trim()) {
     termsText = d.payment_terms.trim().replace(/\.$/, '') + '. ' + tail;

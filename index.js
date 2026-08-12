@@ -60,10 +60,6 @@ const LOGO_PATH = __dirname + '/Mayor_Logo_transparent.png';
 
 // ---- /generate hardening (this endpoint is browser-reachable and writes to the sheet) ----
 function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v; }
-// Status is monotonic — never regress an order (paid/shipped/delivered) back to
-// Awaiting Payment when its invoice is regenerated. Mirrors googleStore.js.
-const STATUS_RANK = { 'awaiting customer approval': 1, 'awaiting payment': 2, 'pending': 3, 'paid': 3, 'in transit': 4, 'shipped': 4, 'delivered': 5 };
-const statusRank = (s) => STATUS_RANK[String(s || '').trim().toLowerCase()] || 0;
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
 function normalizeOrderNumber(v) { return String(v || '').trim().replace(/\s+/g, ' '); }

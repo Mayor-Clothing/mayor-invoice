@@ -21,40 +21,39 @@ function fmtMoney(n) {
   return '$' + num.toLocaleString('en-US', { minimumFractionDigits: hasCents ? 2 : 0, maximumFractionDigits: 2 });
 }
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const IMAGE_FETCH_TIMEOUT_MS = 8000;
+// SSRF-hardened: https only, image extension at the END of the path (not just
+// anywhere in the URL), no redirects, 8s timeout, 5MB cap. Any failure => null
+// (the PDF falls back to the product name).
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGES = 6;
 
 async function fetchImageBuffer(url) {
-  // Only fetch https image URLs whose path ends in an allowed extension. Blocks
-  // SSRF (no http/internal-metadata targets, no redirects) with a timeout + size cap.
   if (typeof url !== 'string') return null;
   let parsed;
   try { parsed = new URL(url); } catch (e) { return null; }
   if (parsed.protocol !== 'https:') return null;
   if (!/\.(png|jpe?g|webp)$/i.test(parsed.pathname)) return null;
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS);
-    const r = await fetch(url, { signal: controller.signal, redirect: 'error' });
-    clearTimeout(timer);
+    const r = await fetch(parsed.href, { redirect: 'error', signal: AbortSignal.timeout(8000) });
     if (!r.ok) return null;
-    const len = Number(r.headers.get('content-length') || 0);
-    if (len && len > MAX_IMAGE_BYTES) return null;
+    const len = Number(r.headers.get('content-length'));
+    if (Number.isFinite(len) && len > MAX_IMAGE_BYTES) return null;
     const buf = Buffer.from(await r.arrayBuffer());
-    return buf.length > MAX_IMAGE_BYTES ? null : buf;
+    if (buf.length > MAX_IMAGE_BYTES) return null;
+    return buf;
   } catch (e) { return null; }
 }
 
 // data = the /generate payload (see blueprint §5.2). logoPath lets a consuming
 // repo point at its own copy of the logo; defaults to the one beside this module.
 async function renderInvoicePdf(data, logoPath = DEFAULT_LOGO_PATH) {
-  // Pre-fetch product + mockup images as buffers (mirrors the order page's
-  // Product / Mockup columns).
+  // Pre-fetch product + mockup images as buffers (bounded — 5 slots). Mockup
+  // column mirrors the order page.
   const imageBuffers = await Promise.all(
-    (data.line_items || []).map(item => fetchImageBuffer(item.url))
+    (data.line_items || []).map((item, i) => (i < MAX_IMAGES ? fetchImageBuffer(item.url) : null))
   );
   const mockupBuffers = await Promise.all(
-    (data.line_items || []).map(item => fetchImageBuffer(item.mockup))
+    (data.line_items || []).map((item, i) => (i < MAX_IMAGES ? fetchImageBuffer(item.mockup) : null))
   );
   const {
     order_number = '', club = '', address = '', shipping_address = '', ship_date = '',

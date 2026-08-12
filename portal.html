@@ -318,7 +318,7 @@
       <div class="card">
         <div id="detail-info"></div>
       </div>
-      <div class="card" style="align-self:stretch;">
+      <div class="card">
         <p class="section-label">Shipping</p>
         <div id="detail-shipping"></div>
       </div>
@@ -804,7 +804,7 @@ async function showOrder(idx) {
     // Billing/shipping addresses on the left — only show Shipping Address separately if it differs
     const hasShipAddr = d.shipping_address && d.shipping_address.trim() && d.shipping_address.trim() !== (d.address || '').trim();
     const addrToHTML = (label, addr) => addr && addr.trim()
-      ? `<div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:4px;"><span class="detail-key">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:left; font-weight:400;">${esc(addr.trim())}</span></div>`
+      ? `<div class="detail-row" style="align-items:flex-start; gap:24px;"><span class="detail-key" style="flex-shrink:0;">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:right;">${esc(addr.trim())}</span></div>`
       : '';
     infoEl.innerHTML +=
       addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', d.address) +

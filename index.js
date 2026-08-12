@@ -179,7 +179,7 @@ async function appendOrderToSheet(data) {
       if (infoIdx < 1) {
         await writeToSheet('Order Info',  data.order_number,
           [data.order_number || '', data.club || '', data.ship_date || '',
-           data.customer_email || '', 'Awaiting Approval', '', '', dealId].map(sheetSafe));
+           data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId].map(sheetSafe));
       } else if (normalizeOrderNumber((infoRows[infoIdx] || [])[0]) !== normalizeOrderNumber(data.order_number)) {
         // Rename: update order_number (A) in place on the deal_id-matched row.
         await sheets.spreadsheets.values.update({

@@ -183,7 +183,7 @@ async function appendOrderToSheet(data) {
       if (infoIdx < 1) {
         await writeToSheet('Order Info',  data.order_number,
           [data.order_number || '', data.club || '', data.ship_date || '',
-           data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId].map(sheetSafe));
+           data.customer_email || '', 'Awaiting Approval', '', '', dealId].map(sheetSafe));
       } else if (normalizeOrderNumber((infoRows[infoIdx] || [])[0]) !== normalizeOrderNumber(data.order_number)) {
         // Rename: update order_number (A) in place on the deal_id-matched row.
         await sheets.spreadsheets.values.update({
@@ -204,18 +204,9 @@ async function appendOrderToSheet(data) {
 
     } else {
       await writeToSheet('Invoices', data.order_number, rowData);
-
-      // Update Order Info status to Awaiting Payment (keyed on deal_id; monotonic).
-      const orderRows = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Info!A:H' });
-      const orderData = orderRows.data.values || [];
-      const orderIdx = matchRowIndex(orderData, INFO_DEAL_COL, 0, dealId, normalizeOrderNumber(data.order_number));
-      if (orderIdx > 0 && statusRank('Awaiting Payment') > statusRank((orderData[orderIdx] || [])[4])) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SHEET_ID, range: `Order Info!E${orderIdx + 1}`,
-          valueInputOption: 'USER_ENTERED', resource: { values: [['Awaiting Payment']] }
-        });
-        console.log('Invoice logged, status updated to Awaiting Payment:', data.order_number);
-      }
+      // Status is manual now (HubSpot "Order Status" dropdown, or edited directly
+      // on the sheet). Generating an invoice no longer auto-advances it to
+      // Awaiting Payment.
     }
   } catch(e) {
     console.error('Sheet write failed:', e.message);

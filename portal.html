@@ -576,6 +576,7 @@ function fmtMoney(n) {
 // old badge-${status.toLowerCase()} approach: the space produced an invalid two-token
 // class name that matched no CSS rule, so the badge silently rendered with no color.
 const STATUS_BADGE_CLASS = {
+  'awaiting approval': 'badge-purple',
   'awaiting customer approval': 'badge-purple',
   'awaiting payment': 'badge-exception',
   'pending': 'badge-pending',

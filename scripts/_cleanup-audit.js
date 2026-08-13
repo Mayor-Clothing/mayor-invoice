@@ -3,7 +3,7 @@
 const { google } = require('googleapis');
 
 const SHEET_ID = process.env.MO_SHEET_ID;
-const ORDERS = ['AUDIT-20260812A', 'AUDIT-20260812B'];
+const ORDERS = ['AUDIT-20260812A', 'AUDIT-20260812B', 'AUDIT-20260813C'];
 const TABS = [['Order Confirmations', 5], ['Invoices', 5], ['Order Info', 0]];
 const CONFIRM = process.argv.includes('--confirm');
 

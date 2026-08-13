@@ -226,7 +226,10 @@ function parseSheetRow(row) {
     const price = parseCurrency(row[COL[p]]);
     if (qty > 0) {
       items.push({
-        product:    'Custom Print Polo',
+        // The Product cell is name-or-URL (see portal.html nameLabel). Hardcoding
+        // the generic label here meant a PDF built from the sheet lost every
+        // product name Matt typed in.
+        product:    (!/^https?:\/\//i.test(String(row[COL[u]] || '').trim()) && String(row[COL[u]] || '').trim()) || 'Custom Print Polo',
         url:        row[COL[u]] || '',
         description: row[COL[d]] || '',
         sizes:      row[COL[s]] || '',

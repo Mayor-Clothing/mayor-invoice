@@ -606,7 +606,7 @@ function adminFlagBadges(o) {
 // instead of the display LABEL Matt renamed them to ("In Progress"/"In Transit").
 // Map value->label on read so a customer never sees the internal word, mirroring
 // hermesMapping.STATUS_VALUE_TO_LABEL which does the same on the Hermes write path.
-const STATUS_VALUE_TO_LABEL = { pending: 'In Progress', shipped: 'In Transit' };
+const STATUS_VALUE_TO_LABEL = { pending: 'In Progress', shipped: 'In Transit', 'awaiting approval': 'Awaiting Customer Approval' };
 function displayStatus(status) {
   const s = (status || '').trim();
   return STATUS_VALUE_TO_LABEL[s.toLowerCase()] || s;

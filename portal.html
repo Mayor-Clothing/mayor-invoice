@@ -622,7 +622,10 @@ function buildTermsHTML(d) {
   const tail = 'Based on our custom model, garments are produced specially for each customer. Once customers approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. ';
   let termsText;
   if (d.payment_terms && d.payment_terms.trim()) {
-    termsText = d.payment_terms.trim().replace(/\.$/, '') + '. ' + tail;
+    // Skip the tail when the custom terms already contain it (some deals have
+    // the whole paragraph typed in) — otherwise it reads twice.
+    const custom = d.payment_terms.trim().replace(/\.$/, '');
+    termsText = /no returns or exchanges/i.test(custom) ? custom + '. ' : custom + '. ' + tail;
   } else {
     const leadIn = isSplitPayment ? '50% deposit, 50% on receipt. ' : 'Due on receipt. ';
     termsText = leadIn + tail;

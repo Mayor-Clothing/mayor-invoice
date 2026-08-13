@@ -821,9 +821,14 @@ async function showOrder(idx) {
       addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', d.address) +
       (hasShipAddr ? addrToHTML('Shipping Address', d.shipping_address) : '');
 
-    // Payment link (renamed from "Payment"/"Pay Invoice" per request)
-    if (safeUrl(d.payment_link)) {
-      infoEl.innerHTML += `<div class="detail-row"><span class="detail-key">Payment Link</span><span class="detail-val"><a href="${esc(safeUrl(d.payment_link))}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Click Here</a></span></div>`;
+    // Payment link (renamed from "Payment"/"Pay Invoice" per request). A 50/50
+    // deal carries two links; label them the way the PDF does (doc-render.js)
+    // instead of showing only the deposit, which left no way to pay the balance.
+    const payRow = (label, url) => `<div class="detail-row"><span class="detail-key">${label}</span><span class="detail-val"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Click Here</a></span></div>`;
+    if (safeUrl(d.payment_link) && safeUrl(d.payment_link_2)) {
+      infoEl.innerHTML += payRow('50% Deposit', safeUrl(d.payment_link)) + payRow('50% on Receipt', safeUrl(d.payment_link_2));
+    } else if (safeUrl(d.payment_link) || safeUrl(d.payment_link_2)) {
+      infoEl.innerHTML += payRow('Payment Link', safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
     }
 
     // Single smart download button: invoice if there's a payment link (order has

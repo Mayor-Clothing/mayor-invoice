@@ -63,6 +63,8 @@ function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
 function normalizeOrderNumber(v) { return String(v || '').trim().replace(/\s+/g, ' '); }
+// Strike cell: '1' struck, '0' explicitly not struck, '' the caller never said.
+const strikeCell = (v) => (v == null ? '' : (v ? '1' : '0'));
 // Payment links must be on a trusted host (blocks payment-link fraud). Extend as needed.
 const TRUSTED_PAYMENT_HOSTS = (process.env.TRUSTED_PAYMENT_HOSTS || 'nickelpayments.com,mayorclothing.com')
   .split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
@@ -141,7 +143,10 @@ async function appendOrderToSheet(data) {
       art_setup: (data.art_setup != null ? parseFloat(String(data.art_setup).replace(/[$,\s]/g,'')) || '' : ''),
       sample_reimbursement: data.sample_reimbursement || '', custom_label: data.custom_label || '', shipping: data.shipping || '', total: data.total || '',
       payment_link: data.payment_link || '', payment_link_2: data.payment_link_2 || '',
-      strike_embroidery: data.strike_embroidery ? '1' : '', strike_art: data.strike_art ? '1' : '', strike_shipping: data.strike_shipping ? '1' : '',
+      // '1' struck, '0' explicitly not struck, blank = caller never said (portal
+      // falls back to the legacy default, portal.js strikeCell). Collapsing false
+      // into blank made an unstruck fee render struck while the total charged it.
+      strike_embroidery: strikeCell(data.strike_embroidery), strike_art: strikeCell(data.strike_art), strike_shipping: strikeCell(data.strike_shipping),
       orig_price_1: get(0,'orig_price'), orig_price_2: get(1,'orig_price'), orig_price_3: get(2,'orig_price'), orig_price_4: get(3,'orig_price'), orig_price_5: get(4,'orig_price'),
       drive_pdf_link: '', // set by the backend's Drive upload; blank when written here
       rush_fee: data.rush_fee || '',

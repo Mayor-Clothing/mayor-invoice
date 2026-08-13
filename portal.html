@@ -293,6 +293,12 @@
         <h1>Your Orders</h1>
         <p class="subtitle" style="margin:0;" id="orders-club-name"></p>
       </div>
+      <select id="orders-sort" onchange="sortAndRenderOrders()" style="width:auto; padding:6px 10px; font-size:13px;">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="az">Order number A–Z</option>
+        <option value="za">Order number Z–A</option>
+      </select>
     </div>
     <div class="card" id="orders-list-card">
       <div id="orders-list"><p style="color:#888; font-size:13px;">Loading your orders…</p></div>
@@ -550,7 +556,28 @@ async function loadOrders() {
       list.innerHTML = '<p style="color:#888; font-size:13px;">No orders found.</p>';
       return;
     }
-    list.innerHTML = currentOrders.map((o, i) => `
+    sortAndRenderOrders();
+  } catch(e) {
+    list.innerHTML = `<p style="color:#dc2626; font-size:13px;">${esc(e.message)}</p>`;
+  }
+}
+
+// Sorts currentOrders IN PLACE, because the row's onclick passes its index into
+// that same array. `seq` is the sheet row, which is append order — the closest
+// thing to a created-at we have, since ship dates are often blank and order
+// numbers mix names with digits.
+function sortAndRenderOrders() {
+  const list = document.getElementById('orders-list');
+  const mode = (document.getElementById('orders-sort') || {}).value || 'newest';
+  const byNumber = (a, b) => String(a.order_number || '').localeCompare(String(b.order_number || ''), undefined, { numeric: true, sensitivity: 'base' });
+  const sorters = {
+    newest: (a, b) => (b.seq || 0) - (a.seq || 0),
+    oldest: (a, b) => (a.seq || 0) - (b.seq || 0),
+    az: byNumber,
+    za: (a, b) => byNumber(b, a),
+  };
+  currentOrders.sort(sorters[mode] || sorters.newest);
+  list.innerHTML = currentOrders.map((o, i) => `
       <div class="order-row" onclick="showOrder(${i})">
         <div>
           <div class="order-title">${esc(o.order_number)}</div>
@@ -561,9 +588,6 @@ async function loadOrders() {
           <span class="badge ${statusBadgeClass(o.status)}">${esc(displayStatus(o.status))}</span>
         </div>
       </div>`).join('');
-  } catch(e) {
-    list.innerHTML = `<p style="color:#dc2626; font-size:13px;">${esc(e.message)}</p>`;
-  }
 }
 
 function fmtMoney(n) {
@@ -902,6 +926,11 @@ async function showOrder(idx) {
 
       // Amount = price x quantity for this product.
       const itemAmount = Number(item.amount) || (Number(item.quantity) * Number(item.price)) || 0;
+      // Strike the original AMOUNT too, not just the unit price — mirrors the PDF
+      // (doc-render.js draws orig_price x quantity struck above the real amount).
+      const amountHTML = item.orig_price && Number(item.orig_price) > 0
+        ? `<span style="text-decoration:line-through; color:#aaa; display:block; font-size:12px;">${fmtMoney(Number(item.orig_price) * Number(item.quantity))}</span><span>${fmtMoney(itemAmount)}</span>`
+        : fmtMoney(itemAmount);
       html += `<div style="display:grid; grid-template-columns:140px 90px 2fr 1fr 1fr 1fr; gap:0 10px; padding:10px 0; border-bottom:1px solid #f0f0ee; align-items:start;">
         <div>${imgHTML}</div>
         <div>${mockupHTML}</div>
@@ -911,7 +940,7 @@ async function showOrder(idx) {
         </div>
         <div style="font-size:13px; text-align:center;">${esc(item.quantity)}</div>
         <div style="font-size:13px; text-align:right;">${priceHTML}</div>
-        <div style="font-size:13px; text-align:right;">${fmtMoney(itemAmount)}</div>
+        <div style="font-size:13px; text-align:right;">${amountHTML}</div>
       </div>`;
     });
 

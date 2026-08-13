@@ -14,7 +14,7 @@ app.set('trust proxy', 1);
 // (GitHub Pages) and the orders portal POST here from the browser; everything else
 // is blocked. Add new front-end origins to this list if they're introduced.
 const ALLOWED_ORIGINS = [
-  'https://mayorclothing.github.io',
+  'https://mayor-clothing.github.io',
   'https://orders.mayorclothing.com',
   'https://mayor-invoice.onrender.com',
 ];

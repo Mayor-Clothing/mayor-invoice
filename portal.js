@@ -81,6 +81,21 @@ function isAdminUser(user) {
 }
 
 // ── GOOGLE SHEETS ──
+// Every order-detail read pulls whole tabs, so a handful of quick clicks used to
+// trip Google's per-minute read quota and the portal 500s. Cache the big
+// read-only tabs for a few seconds; Users is never cached (a fresh signup must
+// be visible to the very next login attempt).
+const CACHE_TTL_MS = 15000;
+const _rangeCache = new Map();
+async function readRange(sheets, range) {
+  const hit = _rangeCache.get(range);
+  if (hit && Date.now() - hit.t < CACHE_TTL_MS) return hit.v;
+  const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+  const rows = res.data.values || [];
+  _rangeCache.set(range, { t: Date.now(), v: rows });
+  return rows;
+}
+
 async function getSheets() {
   const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT || '{}');
   const auth = new google.auth.GoogleAuth({
@@ -99,11 +114,7 @@ function emailInList(cellValue, email) {
 
 async function getOrdersFromSheet(email) {
   const sheets = await getSheets();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Order Info!A:H',
-  });
-  const rows = res.data.values || [];
+  const rows = await readRange(sheets, 'Order Info!A:H');
   return rows.slice(1)
     .filter(r => emailInList(r[3], email))
     .map(r => ({
@@ -124,11 +135,7 @@ async function getOrdersFromSheet(email) {
 // showing up for a customer login).
 async function getAllOrdersFromSheet() {
   const sheets = await getSheets();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Order Info!A:H',
-  });
-  const rows = res.data.values || [];
+  const rows = await readRange(sheets, 'Order Info!A:H');
   const orders = rows.slice(1)
     .filter(r => r[0])
     .map(r => ({
@@ -193,11 +200,7 @@ async function upsertUser(email, passwordHash, club) {
 async function emailHasOrders(email) {
   const sheets = await getSheets();
   // Check Order Info first (fastest)
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Order Info!A:D',
-  });
-  const rows = res.data.values || [];
+  const rows = await readRange(sheets, 'Order Info!A:D');
   return rows.some(r => emailInList(r[3], email));
 }
 
@@ -291,12 +294,12 @@ async function getOrderDetailData(order_number) {
   const sheets = await getSheets();
   const target = normalizeOrderNumber(order_number);
 
-  const [invRes, confRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Invoices!A:BZ' }),
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Confirmations!A:BZ' }),
+  const [invRows, confRows] = await Promise.all([
+    readRange(sheets, 'Invoices!A:BZ'),
+    readRange(sheets, 'Order Confirmations!A:BZ'),
   ]);
-  const invRow = (invRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === target);
-  const confRow = (confRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === target);
+  const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
+  const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
 
   const primaryRow = invRow || confRow;
   if (!primaryRow) return null;
@@ -507,14 +510,11 @@ router.get('/confirmation/:order_number', requireAuth, async (req, res) => {
     }
 
     const sheets = await getSheets();
-    const confRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      // Full range through BF — parseSheetRow reads fields (embroidery, payment_terms,
-      // sizes, orig_price, drive_pdf_link, etc.) from columns well past the line
-      // items; a narrower range silently dropped them from the PDF.
-      range: 'Order Confirmations!A:BZ',
-    });
-    const confRow = (confRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
+    // Full range through BZ — parseSheetRow reads fields (embroidery, payment_terms,
+    // sizes, orig_price, drive_pdf_link, etc.) from columns well past the line
+    // items; a narrower range silently dropped them from the PDF.
+    const confRows = await readRange(sheets, 'Order Confirmations!A:BZ');
+    const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!confRow) return res.status(404).json({ error: 'Order confirmation not available.' });
 
     const confData = parseSheetRow(confRow);
@@ -544,11 +544,9 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
 
     // Only generate PDF from Invoices sheet (not confirmations)
     const sheets = await getSheets();
-    const invRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Invoices!A:BZ', // see comment on the Order Confirmations read above
-    });
-    const invRow = (invRes.data.values || []).find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
+    // see comment on the Order Confirmations read above
+    const invRows = await readRange(sheets, 'Invoices!A:BZ');
+    const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!invRow) return res.status(404).json({ error: 'Invoice not available yet. Your order confirmation is still being reviewed.' });
 
     const invoiceData = parseSheetRow(invRow);

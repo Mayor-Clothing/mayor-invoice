@@ -119,6 +119,24 @@ async function main() {
   if (!CONFIRM) { console.log('\nDRY RUN — re-run with HUBSPOT_TOKEN set and --confirm to write.'); return; }
   if (!TOKEN) throw new Error('HUBSPOT_TOKEN is not set');
 
+  // Snapshot every property this run is about to touch, before touching it.
+  // HubSpot has no undo and most of these are written blank on purpose.
+  const props = [...new Set(inputs.flatMap((i) => Object.keys(i.properties)))];
+  const backup = [];
+  for (let i = 0; i < inputs.length; i += 50) {
+    const r = await fetch('https://api.hubapi.com/crm/v3/objects/deals/batch/read', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ properties: props, inputs: inputs.slice(i, i + 50).map(({ id }) => ({ id })) }),
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(`backup read failed ${r.status}: ${JSON.stringify(body).slice(0, 300)}`);
+    backup.push(...body.results);
+  }
+  const file = `${process.env.TEMP || '.'}/hubspot-backup-${Date.now()}.json`;
+  require('fs').writeFileSync(file, JSON.stringify(backup, null, 2));
+  console.log(`backed up ${backup.length} deals -> ${file}`);
+
   for (let i = 0; i < inputs.length; i += 50) {
     const chunk = inputs.slice(i, i + 50);
     const r = await fetch('https://api.hubapi.com/crm/v3/objects/deals/batch/update', {

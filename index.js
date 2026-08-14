@@ -238,6 +238,8 @@ app.post('/generate', async (req, res) => {
 });
 
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// ponytail: `commit` answers "did my fix actually deploy?" without probing behavior.
+// Render sets RENDER_GIT_COMMIT; locally there's no deploy, so say so.
+app.get('/health', (req, res) => res.json({ status: 'ok', commit: process.env.RENDER_GIT_COMMIT || 'local' }));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Mayor invoice server running on port', PORT));

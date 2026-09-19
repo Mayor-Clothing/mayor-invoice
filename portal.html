@@ -852,7 +852,7 @@ async function showOrder(idx) {
     if (safeUrl(d.payment_link) && safeUrl(d.payment_link_2)) {
       infoEl.innerHTML += payRow('50% Deposit', safeUrl(d.payment_link)) + payRow('50% on Receipt', safeUrl(d.payment_link_2));
     } else if (safeUrl(d.payment_link) || safeUrl(d.payment_link_2)) {
-      infoEl.innerHTML += payRow('Payment Link', safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
+      infoEl.innerHTML += payRow('Payment', safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
     }
 
     // Single smart download button: invoice if there's a payment link (order has

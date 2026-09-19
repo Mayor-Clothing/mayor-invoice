@@ -722,7 +722,7 @@ async function showOrder(idx) {
   badge.className = 'badge ' + statusBadgeClass(o.status);
 
   document.getElementById('detail-info').innerHTML = `
-    <div class="detail-row"><span class="detail-key">Ship Date</span><span class="detail-val">${esc(formatShipDate(o.ship_date))}</span></div>`;
+    <div class="detail-row"><span class="detail-key">Ship By Date</span><span class="detail-val">${esc(formatShipDate(o.ship_date))}</span></div>`;
 
   const trackingHTML = o.tracking_number
     ? `<div class="detail-row"><span class="detail-key">Carrier</span><span class="detail-val">UPS</span></div>

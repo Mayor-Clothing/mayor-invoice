@@ -670,7 +670,7 @@ async function showOrder(idx) {
   currentOrder = currentOrders[idx];
   const o = currentOrder;
 
-  document.getElementById('detail-order-number').textContent = 'Order Number: ' + o.order_number;
+  document.getElementById('detail-order-number').textContent = 'Order: ' + o.order_number;
   document.getElementById('detail-club').textContent = o.club;
 
   // Per-order print background, when Matt/Marcus has one for this order --

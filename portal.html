@@ -567,10 +567,14 @@ async function loadOrders() {
 function sortAndRenderOrders() {
   const list = document.getElementById('orders-list');
   const mode = (document.getElementById('orders-sort') || {}).value || 'za';
-  const byNumber = (a, b) => String(a.order_number || '').localeCompare(String(b.order_number || ''), undefined, { numeric: true, sensitivity: 'base' });
+  // Sorts by HubSpot's own Deal Name (e.g. "PO #094 - Club Name I") so the PO
+  // number drives the order, not the separate order_number field -- which for
+  // older orders is often just the club name with no PO prefix. Falls back to
+  // order_number for any order written before deal_name existed on this sheet.
+  const byDealName = (a, b) => String(a.deal_name || a.order_number || '').localeCompare(String(b.deal_name || b.order_number || ''), undefined, { numeric: true, sensitivity: 'base' });
   const sorters = {
-    az: byNumber,
-    za: (a, b) => byNumber(b, a),
+    az: byDealName,
+    za: (a, b) => byDealName(b, a),
   };
   currentOrders.sort(sorters[mode] || sorters.za);
   list.innerHTML = currentOrders.map((o, i) => `

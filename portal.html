@@ -294,8 +294,6 @@
         <p class="subtitle" style="margin:0;" id="orders-club-name"></p>
       </div>
       <select id="orders-sort" onchange="sortAndRenderOrders()" style="width:auto; padding:6px 10px; font-size:13px;">
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
         <option value="az">Order number A–Z</option>
         <option value="za">Order number Z–A</option>
       </select>
@@ -568,15 +566,13 @@ async function loadOrders() {
 // numbers mix names with digits.
 function sortAndRenderOrders() {
   const list = document.getElementById('orders-list');
-  const mode = (document.getElementById('orders-sort') || {}).value || 'newest';
+  const mode = (document.getElementById('orders-sort') || {}).value || 'az';
   const byNumber = (a, b) => String(a.order_number || '').localeCompare(String(b.order_number || ''), undefined, { numeric: true, sensitivity: 'base' });
   const sorters = {
-    newest: (a, b) => (b.seq || 0) - (a.seq || 0),
-    oldest: (a, b) => (a.seq || 0) - (b.seq || 0),
     az: byNumber,
     za: (a, b) => byNumber(b, a),
   };
-  currentOrders.sort(sorters[mode] || sorters.newest);
+  currentOrders.sort(sorters[mode] || sorters.az);
   list.innerHTML = currentOrders.map((o, i) => `
       <div class="order-row" onclick="showOrder(${i})">
         <div>

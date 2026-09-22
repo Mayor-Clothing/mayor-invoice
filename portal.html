@@ -859,7 +859,7 @@ async function showOrder(idx) {
     // been invoiced), otherwise the order confirmation.
     const hasPaymentLink = !!(safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
     const downloadBtn = document.getElementById('detail-download-btn');
-    downloadBtn.textContent = 'Download';
+    downloadBtn.textContent = 'Download Invoice';
     downloadBtn.onclick = hasPaymentLink ? downloadInvoice : downloadConfirmation;
     document.getElementById('detail-download-card').style.display = 'block';
 

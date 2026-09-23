@@ -661,7 +661,6 @@ function adminFlagBadges(o) {
   const flags = [];
   if (o.duplicate) flags.push(['badge-exception', 'Duplicate #']);
   if (o.missing_email) flags.push(['badge-exception', 'No email']);
-  if (o.missing_tracking) flags.push(['badge-pending', 'No tracking']);
   return flags.map(([cls, label]) => `<span class="badge ${cls}" style="margin-right:6px;">${label}</span>`).join('');
 }
 

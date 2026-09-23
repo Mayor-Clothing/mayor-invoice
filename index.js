@@ -187,12 +187,24 @@ async function appendOrderToSheet(data) {
         await writeToSheet('Order Info',  data.order_number,
           [data.order_number || '', data.club || '', data.ship_date || '',
            data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId, data.deal_name || ''].map(sheetSafe));
-      } else if (normalizeOrderNumber((infoRows[infoIdx] || [])[0]) !== normalizeOrderNumber(data.order_number)) {
-        // Rename: update order_number (A) in place on the deal_id-matched row.
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SHEET_ID, range: `Order Info!A${infoIdx + 1}`,
-          valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.order_number)]] }
-        });
+      } else {
+        const infoRow = infoRows[infoIdx] || [];
+        if (normalizeOrderNumber(infoRow[0]) !== normalizeOrderNumber(data.order_number)) {
+          // Rename: update order_number (A) in place on the deal_id-matched row.
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID, range: `Order Info!A${infoIdx + 1}`,
+            valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.order_number)]] }
+          });
+        }
+        // Keep the email column in sync with HubSpot -- previously only set when
+        // the row was first created, so adding a second email to an existing deal
+        // never reached the sheet no matter how many times this ran.
+        if (data.customer_email && String(infoRow[3] || '') !== data.customer_email) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID, range: `Order Info!D${infoIdx + 1}`,
+            valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.customer_email)]] }
+          });
+        }
       }
 
       // Make sure each customer's email is registered in the Users sheet

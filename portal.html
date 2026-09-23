@@ -1068,7 +1068,7 @@ async function showOrder(idx) {
       ${customLabelRow}
       ${commissionRow}
       ${totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping))}
-      ${rushForTotal ? totRow('Rush Fee', fmtMoney(rushForTotal)) : ''}
+      ${rushForTotal ? totRow('Expedited Order', fmtMoney(rushForTotal)) : ''}
       ${reimbRow}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}
     </div>`;

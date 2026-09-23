@@ -614,8 +614,8 @@ function sortAndRenderOrders() {
         </div>
         <div class="order-right">
           ${currentUser.admin ? adminFlagBadges(o) : ''}
-          ${o.payment_status && o.payment_status.trim() ? `<span class="badge ${paymentStatusBadgeClass(o.payment_status)}" style="margin-right:6px;">${esc(o.payment_status.trim())}</span>` : ''}
-          <span class="badge ${statusBadgeClass(o.status)}">${esc(displayStatus(o.status))}</span>
+          <span class="badge ${statusBadgeClass(o.status)}" style="margin-right:6px;">${esc(displayStatus(o.status))}</span>
+          ${o.payment_status && o.payment_status.trim() ? `<span class="badge ${paymentStatusBadgeClass(o.payment_status)}">${esc(o.payment_status.trim())}</span>` : ''}
         </div>
       </div>`).join('');
 }

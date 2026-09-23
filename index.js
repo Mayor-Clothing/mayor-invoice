@@ -59,7 +59,9 @@ const SHEET_CREDS = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT || '{}');
 const LOGO_PATH = __dirname + '/Mayor_Logo_transparent.png';
 
 // ---- /generate hardening (this endpoint is browser-reachable and writes to the sheet) ----
-function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v; }
+// Also guards a leading-zero digit string (e.g. order number "092826") — Sheets'
+// USER_ENTERED auto-number conversion otherwise silently drops the zero (F/U 2026-09).
+function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]|^0\d/.test(v) ? `'${v}` : v; }
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
 function normalizeOrderNumber(v) { return String(v || '').trim().replace(/\s+/g, ' '); }

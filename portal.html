@@ -221,7 +221,7 @@
           <span onclick="togglePw('login-password','toggle-login')" id="toggle-login" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted-foreground);font-size:12px;">Show</span>
         </div>
       </div>
-      <button class="btn auth-btn" onclick="doLogin()" id="login-btn">Sign in</button>
+      <button class="btn auth-btn" onclick="doLogin()" id="login-btn">Continue</button>
       <p class="auth-bottom">Don't have an account? <a href="#" onclick="showPage('create-account')">Sign up</a></p>
     </div>
   </div>
@@ -442,7 +442,7 @@ async function doLogin() {
   } catch(e) {
     showAlert('login-alert', 'error', e.message);
   } finally {
-    btn.disabled = false; btn.textContent = 'Sign in';
+    btn.disabled = false; btn.textContent = 'Continue';
   }
 }
 

@@ -877,8 +877,8 @@ async function showOrder(idx) {
       ? `<div class="detail-row" style="align-items:flex-start; gap:24px;"><span class="detail-key" style="flex-shrink:0;">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:right;">${esc(addr.trim())}</span></div>`
       : '';
     infoEl.innerHTML +=
-      addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', hasShipAddr ? d.address : (d.address || d.shipping_address)) +
-      (hasShipAddr ? addrToHTML('Shipping Address', d.shipping_address) : '');
+      (hasShipAddr ? addrToHTML('Shipping Address', d.shipping_address) : '') +
+      addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', hasShipAddr ? d.address : (d.address || d.shipping_address));
 
     // Payment link (renamed from "Payment"/"Pay Invoice" per request). A 50/50
     // deal carries two links; label them the way the PDF does (doc-render.js)

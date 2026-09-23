@@ -40,6 +40,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #000 url('/auth-bg-1.png') top left/950px 297px repeat; color: var(--foreground); min-height: 100vh; }
   body.detail-bg { background-image: url('/auth-bg-3.png'); background-size: 950px 295px; }
+  body.orders-bg { background-image: none; background-color: #000; }
 
   /* NAV */
   /* Nav only ever shows on the black-background app pages now (auth pages hide it
@@ -406,6 +407,7 @@ function showPage(name) {
   document.getElementById('page-' + name).classList.add('active');
   document.body.classList.toggle('auth-fullbleed', name === 'login' || name === 'create-account' || name === 'forgot');
   document.body.classList.toggle('detail-bg', name === 'detail');
+  document.body.classList.toggle('orders-bg', name === 'orders');
   if (name !== 'detail') {
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';

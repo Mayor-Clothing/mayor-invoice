@@ -729,13 +729,18 @@ async function showOrder(idx) {
     ? `<div class="detail-row"><span class="detail-key">Ship By</span><span class="detail-val">${esc(formatShipDate(o.ship_date))}</span></div>`
     : '';
 
-  const trackingHTML = o.tracking_number
-    ? `<div class="detail-row"><span class="detail-key">Carrier</span><span class="detail-val">UPS</span></div>
-       <div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val"><a class="tracking-link" href="https://www.ups.com/track?tracknum=${encodeURIComponent(o.tracking_number)}" target="_blank">${esc(o.tracking_number)}</a></span></div>`
-    : `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val" style="color:#888;">Not yet available</span></div>`;
+  // "Hand-Delivered" isn't a real UPS tracking number -- don't link it to UPS
+  // or ask UPS's API about it.
+  const isHandDelivered = /^hand[\s-]?delivered$/i.test(String(o.tracking_number || '').trim());
+  const trackingHTML = !o.tracking_number
+    ? `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val" style="color:#888;">Not yet available</span></div>`
+    : isHandDelivered
+    ? `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val">${esc(o.tracking_number)}</span></div>`
+    : `<div class="detail-row"><span class="detail-key">Carrier</span><span class="detail-val">UPS</span></div>
+       <div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val"><a class="tracking-link" href="https://www.ups.com/track?tracknum=${encodeURIComponent(o.tracking_number)}" target="_blank">${esc(o.tracking_number)}</a></span></div>`;
   document.getElementById('detail-shipping').innerHTML = trackingHTML;
 
-  if (o.tracking_number) {
+  if (o.tracking_number && !isHandDelivered) {
     fetch('/portal/tracking/' + encodeURIComponent(o.order_number), { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(t => {

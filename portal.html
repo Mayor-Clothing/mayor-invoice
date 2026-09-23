@@ -970,7 +970,7 @@ async function showOrder(idx) {
     // These must appear here so Subtotal + Shipping + Custom Label - Reimbursement = Total.
     const customLabelVal = Number(d.custom_label) || 0;
     const reimbAmt = parseCurrency(d.sample_reimbursement); // strips "$", commas, and "( )"
-    const customLabelRow = customLabelVal > 0 ? totRow('Custom Main Label', fmtMoney(customLabelVal)) : '';
+    const customLabelRow = customLabelVal > 0 ? totRow('Custom Woven Labels & Hang Tags', fmtMoney(customLabelVal)) : '';
     const reimbRow = reimbAmt > 0
       ? totRow('Sample Reimbursement', `(${fmtMoney(reimbAmt)})`)
       : '';

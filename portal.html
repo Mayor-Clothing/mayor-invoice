@@ -838,7 +838,7 @@ async function showOrder(idx) {
 
     // In-hand date, directly under Ship Date on the left
     if (d.in_hand_date) {
-      infoEl.innerHTML += `<div class="detail-row"><span class="detail-key">In-Hand Date</span><span class="detail-val">${esc(formatShipDate(d.in_hand_date))}</span></div>`;
+      infoEl.innerHTML += `<div class="detail-row"><span class="detail-key">In-Hand By</span><span class="detail-val">${esc(formatShipDate(d.in_hand_date))}</span></div>`;
     }
 
     // Billing/shipping addresses on the left — only show Shipping Address separately if it differs

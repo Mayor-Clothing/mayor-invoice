@@ -139,7 +139,9 @@ async function appendOrderToSheet(data) {
       p3_url: get(2,'url'), p3_desc: get(2,'description'), p3_sizes: get(2,'sizes'), p3_qty: get(2,'quantity'), p3_price: get(2,'price'),
       p4_url: get(3,'url'), p4_desc: get(3,'description'), p4_sizes: get(3,'sizes'),
       p5_url: get(4,'url'), p5_desc: get(4,'description'), p5_sizes: get(4,'sizes'),
+      p6_url: get(5,'url'), p6_desc: get(5,'description'), p6_sizes: get(5,'sizes'),
       p4_qty: get(3,'quantity'), p4_price: get(3,'price'), p5_qty: get(4,'quantity'), p5_price: get(4,'price'),
+      p6_qty: get(5,'quantity'), p6_price: get(5,'price'),
       subtotal_quantity: subtotalQty || '', subtotal: data.subtotal || '',
       embroidery: data.embroidery || '',
       art_setup: (data.art_setup != null ? parseFloat(String(data.art_setup).replace(/[$,\s]/g,'')) || '' : ''),
@@ -150,11 +152,11 @@ async function appendOrderToSheet(data) {
       // falls back to the legacy default, portal.js strikeCell). Collapsing false
       // into blank made an unstruck fee render struck while the total charged it.
       strike_embroidery: strikeCell(data.strike_embroidery), strike_art: strikeCell(data.strike_art), strike_shipping: strikeCell(data.strike_shipping),
-      orig_price_1: get(0,'orig_price'), orig_price_2: get(1,'orig_price'), orig_price_3: get(2,'orig_price'), orig_price_4: get(3,'orig_price'), orig_price_5: get(4,'orig_price'),
+      orig_price_1: get(0,'orig_price'), orig_price_2: get(1,'orig_price'), orig_price_3: get(2,'orig_price'), orig_price_4: get(3,'orig_price'), orig_price_5: get(4,'orig_price'), orig_price_6: get(5,'orig_price'),
       drive_pdf_link: '', // set by the backend's Drive upload; blank when written here
       rush_fee: data.rush_fee || '',
-      p1_product_page: get(0,'product_page'), p2_product_page: get(1,'product_page'), p3_product_page: get(2,'product_page'), p4_product_page: get(3,'product_page'), p5_product_page: get(4,'product_page'),
-      p1_mockup: get(0,'mockup'), p2_mockup: get(1,'mockup'), p3_mockup: get(2,'mockup'), p4_mockup: get(3,'mockup'), p5_mockup: get(4,'mockup'),
+      p1_product_page: get(0,'product_page'), p2_product_page: get(1,'product_page'), p3_product_page: get(2,'product_page'), p4_product_page: get(3,'product_page'), p5_product_page: get(4,'product_page'), p6_product_page: get(5,'product_page'),
+      p1_mockup: get(0,'mockup'), p2_mockup: get(1,'mockup'), p3_mockup: get(2,'mockup'), p4_mockup: get(3,'mockup'), p5_mockup: get(4,'mockup'), p6_mockup: get(5,'mockup'),
     });
 
     // Upsert keyed on the stable deal_id (fallback order_number), so a renamed

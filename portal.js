@@ -232,6 +232,7 @@ function parseSheetRow(row) {
     ['p3_url', 'p3_desc', 'p3_sizes', 'p3_qty', 'p3_price', 'orig_price_3', 'p3_product_page', 'p3_mockup'],
     ['p4_url', 'p4_desc', 'p4_sizes', 'p4_qty', 'p4_price', 'orig_price_4', 'p4_product_page', 'p4_mockup'],
     ['p5_url', 'p5_desc', 'p5_sizes', 'p5_qty', 'p5_price', 'orig_price_5', 'p5_product_page', 'p5_mockup'],
+    ['p6_url', 'p6_desc', 'p6_sizes', 'p6_qty', 'p6_price', 'orig_price_6', 'p6_product_page', 'p6_mockup'],
   ];
   for (const [u, d, s, q, p, o, pp, mk] of slots) {
     const qty   = parseCurrency(row[COL[q]]);

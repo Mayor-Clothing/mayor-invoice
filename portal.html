@@ -566,6 +566,15 @@ async function loadOrders() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     currentOrders = data.orders || [];
+    // TEMPORARY (Matt, 2026-09): admin view only shows PO #082-#094 for now.
+    // Remove this block to go back to showing every order.
+    if (currentUser.admin) {
+      const poNum = (o) => {
+        const m = /^PO\s*#(\d+)/i.exec(o.deal_name || o.order_number || '');
+        return m ? parseInt(m[1], 10) : null;
+      };
+      currentOrders = currentOrders.filter(o => { const n = poNum(o); return n !== null && n >= 82 && n <= 94; });
+    }
     if (currentUser.admin) document.getElementById('orders-club-name').textContent = currentOrders.length + ' orders (admin view)';
     if (!currentOrders.length) {
       list.innerHTML = '<p style="color:#888; font-size:13px;">No orders found.</p>';

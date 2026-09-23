@@ -279,6 +279,7 @@ function parseSheetRow(row) {
     embroidery:        parseCurrency(row[COL.embroidery]),
     art_setup:         artNum,
     sample_reimbursement: row[COL.sample_reimbursement] || null,
+    commission:        row[COL.commission] || null,
     custom_label:      row[COL.custom_label] ? parseCurrency(row[COL.custom_label]) : null,
     rush_fee:          row[COL.rush_fee] ? parseCurrency(row[COL.rush_fee]) : null,
     shipping:          parseCurrency(row[COL.shipping]),

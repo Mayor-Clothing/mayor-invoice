@@ -144,6 +144,7 @@ async function appendOrderToSheet(data) {
       embroidery: data.embroidery || '',
       art_setup: (data.art_setup != null ? parseFloat(String(data.art_setup).replace(/[$,\s]/g,'')) || '' : ''),
       sample_reimbursement: data.sample_reimbursement || '', custom_label: data.custom_label || '', shipping: data.shipping || '', total: data.total || '',
+      commission: data.commission || '',
       payment_link: data.payment_link || '', payment_link_2: data.payment_link_2 || '',
       // '1' struck, '0' explicitly not struck, blank = caller never said (portal
       // falls back to the legacy default, portal.js strikeCell). Collapsing false

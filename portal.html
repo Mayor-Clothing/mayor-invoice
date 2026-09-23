@@ -868,13 +868,16 @@ async function showOrder(idx) {
       infoEl.innerHTML += `<div class="detail-row"><span class="detail-key">In-Hand By</span><span class="detail-val">${esc(formatShipDate(d.in_hand_date))}</span></div>`;
     }
 
-    // Billing/shipping addresses on the left — only show Shipping Address separately if it differs
-    const hasShipAddr = d.shipping_address && d.shipping_address.trim() && d.shipping_address.trim() !== (d.address || '').trim();
+    // Billing/shipping addresses on the left — only show Shipping Address separately if
+    // billing is filled in AND it differs from shipping. If billing is blank, the
+    // shipping address (if any) is shown alone under the combined label instead.
+    const hasBillAddr = d.address && d.address.trim();
+    const hasShipAddr = hasBillAddr && d.shipping_address && d.shipping_address.trim() && d.shipping_address.trim() !== d.address.trim();
     const addrToHTML = (label, addr) => addr && addr.trim()
       ? `<div class="detail-row" style="align-items:flex-start; gap:24px;"><span class="detail-key" style="flex-shrink:0;">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:right;">${esc(addr.trim())}</span></div>`
       : '';
     infoEl.innerHTML +=
-      addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', d.address) +
+      addrToHTML(hasShipAddr ? 'Billing Address' : 'Shipping / Billing Address', hasShipAddr ? d.address : (d.address || d.shipping_address)) +
       (hasShipAddr ? addrToHTML('Shipping Address', d.shipping_address) : '');
 
     // Payment link (renamed from "Payment"/"Pay Invoice" per request). A 50/50

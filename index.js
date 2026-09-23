@@ -180,13 +180,13 @@ async function appendOrderToSheet(data) {
     if (isConfirmation) {
       // Seed the Order Info row if this order isn't there yet (keyed on deal_id
       // so a rename doesn't seed a duplicate). deal_id goes in col H.
-      const infoRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Info!A:H' });
+      const infoRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Order Info!A:J' });
       const infoRows = infoRes.data.values || [];
       const infoIdx = matchRowIndex(infoRows, INFO_DEAL_COL, 0, dealId, normalizeOrderNumber(data.order_number));
       if (infoIdx < 1) {
         await writeToSheet('Order Info',  data.order_number,
           [data.order_number || '', data.club || '', data.ship_date || '',
-           data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId, data.deal_name || ''].map(sheetSafe));
+           data.customer_email || '', 'Awaiting Customer Approval', '', '', dealId, data.deal_name || '', data.payment_status || ''].map(sheetSafe));
       } else {
         const infoRow = infoRows[infoIdx] || [];
         if (normalizeOrderNumber(infoRow[0]) !== normalizeOrderNumber(data.order_number)) {
@@ -203,6 +203,14 @@ async function appendOrderToSheet(data) {
           await sheets.spreadsheets.values.update({
             spreadsheetId: SHEET_ID, range: `Order Info!D${infoIdx + 1}`,
             valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.customer_email)]] }
+          });
+        }
+        // Payment Status is its own manual dropdown from HubSpot -- write it
+        // whenever it's set and differs (any direction, same as Order Status).
+        if (data.payment_status && String(infoRow[9] || '') !== data.payment_status) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID, range: `Order Info!J${infoIdx + 1}`,
+            valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.payment_status)]] }
           });
         }
       }

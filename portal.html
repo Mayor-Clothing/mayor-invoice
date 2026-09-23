@@ -316,7 +316,10 @@
           <h1 id="detail-order-number"></h1>
           <p class="subtitle" id="detail-club" style="margin:0;"></p>
         </div>
-        <span class="badge" id="detail-status-badge"></span>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <span class="badge" id="detail-status-badge"></span>
+          <span class="badge" id="detail-payment-badge" style="display:none;"></span>
+        </div>
       </div>
     </div>
 
@@ -611,6 +614,7 @@ function sortAndRenderOrders() {
         </div>
         <div class="order-right">
           ${currentUser.admin ? adminFlagBadges(o) : ''}
+          ${o.payment_status && o.payment_status.trim() ? `<span class="badge ${paymentStatusBadgeClass(o.payment_status)}" style="margin-right:6px;">${esc(o.payment_status.trim())}</span>` : ''}
           <span class="badge ${statusBadgeClass(o.status)}">${esc(displayStatus(o.status))}</span>
         </div>
       </div>`).join('');
@@ -637,6 +641,17 @@ const STATUS_BADGE_CLASS = {
 };
 function statusBadgeClass(status) {
   return STATUS_BADGE_CLASS[(status || '').toLowerCase()] || 'badge-pending';
+}
+
+// Payment Status is a separate field from Order Status -- kept in its own map
+// since "Awaiting Payment" means something different (and a different color)
+// in each of the two systems.
+const PAYMENT_STATUS_BADGE_CLASS = {
+  'awaiting payment': 'badge-pending',
+  'paid': 'badge-delivered',
+};
+function paymentStatusBadgeClass(status) {
+  return PAYMENT_STATUS_BADGE_CLASS[(status || '').toLowerCase()] || 'badge-pending';
 }
 
 // Admin-only data-integrity flags surfaced from getAllOrdersFromSheet — catches the
@@ -746,6 +761,15 @@ async function showOrder(idx) {
   const badge = document.getElementById('detail-status-badge');
   badge.textContent = displayStatus(o.status);
   badge.className = 'badge ' + statusBadgeClass(o.status);
+
+  const paymentBadge = document.getElementById('detail-payment-badge');
+  if (o.payment_status && o.payment_status.trim()) {
+    paymentBadge.textContent = o.payment_status.trim();
+    paymentBadge.className = 'badge ' + paymentStatusBadgeClass(o.payment_status);
+    paymentBadge.style.display = '';
+  } else {
+    paymentBadge.style.display = 'none';
+  }
 
   document.getElementById('detail-info').innerHTML = o.ship_date
     ? `<div class="detail-row"><span class="detail-key">Ship By</span><span class="detail-val">${esc(formatShipDate(o.ship_date))}</span></div>`

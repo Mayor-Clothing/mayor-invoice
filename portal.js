@@ -114,7 +114,7 @@ function emailInList(cellValue, email) {
 
 async function getOrdersFromSheet(email) {
   const sheets = await getSheets();
-  const rows = await readRange(sheets, 'Order Info!A:I');
+  const rows = await readRange(sheets, 'Order Info!A:J');
   // Map before filtering so `seq` stays the real sheet row. Rows are appended as
   // orders are created, so it's the only "newest first" signal we have — order
   // numbers are a mix of names and digits, and ship dates are often blank.
@@ -128,6 +128,7 @@ async function getOrdersFromSheet(email) {
       tracking_number: r[5] || '',
       date_delivered:  r[6] || '',
       deal_name:       r[8] || '',
+      payment_status:  r[9] || '',
       seq:             i + 2,
     }))
     .filter(o => emailInList(o.email, email));
@@ -140,7 +141,7 @@ async function getOrdersFromSheet(email) {
 // showing up for a customer login).
 async function getAllOrdersFromSheet() {
   const sheets = await getSheets();
-  const rows = await readRange(sheets, 'Order Info!A:I');
+  const rows = await readRange(sheets, 'Order Info!A:J');
   const orders = rows.slice(1)
     .map((r, i) => ({
       order_number:    normalizeOrderNumber(r[0]),
@@ -151,6 +152,7 @@ async function getAllOrdersFromSheet() {
       tracking_number: r[5] || '',
       date_delivered:  r[6] || '',
       deal_name:       r[8] || '',
+      payment_status:  r[9] || '',
       seq:             i + 2,
     }))
     .filter(o => o.order_number);

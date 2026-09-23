@@ -490,7 +490,17 @@ async function doCreateAccount() {
       doLogin();
     }, 1000);
   } catch(e) {
-    showAlert('create-alert', 'error', e.message);
+    // The "already have an account" message links to the password-reset page --
+    // showAlert only sets textContent (safe default), so this one case is
+    // rendered separately with a hardcoded, non-user-controlled link.
+    if (e.message === 'We couldn’t create an account with those details. If you have an account, reset your password. Otherwise, contact Mayor at mayor@mayorclothing.com.') {
+      const el = document.getElementById('create-alert');
+      el.className = 'alert alert-error';
+      el.innerHTML = 'We couldn’t create an account with those details. If you have an account, <a href="#" onclick="showForgot()">reset your password</a>. Otherwise, contact Mayor at mayor@mayorclothing.com.';
+      el.style.display = '';
+    } else {
+      showAlert('create-alert', 'error', e.message);
+    }
   } finally {
     btn.disabled = false; btn.textContent = 'Create account';
   }

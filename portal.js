@@ -452,7 +452,7 @@ router.post('/create-account', rateLimit(5, 60000), async (req, res) => {
     const hasOrders = await emailHasOrders(email);
     const existing = await getUserFromSheet(email);
     if (!hasOrders || (existing && existing.passwordHash)) {
-      return res.status(400).json({ error: 'We couldn\u2019t create an account with those details. If you already have one, use Forgot password; otherwise contact Mayor Clothing.' });
+      return res.status(400).json({ error: 'We couldn\u2019t create an account with those details. If you have an account, reset your password. Otherwise, contact Mayor at mayor@mayorclothing.com.' });
     }
     const orders = await getOrdersFromSheet(email);
     const hash = await bcrypt.hash(password, 10);

@@ -196,6 +196,16 @@ async function appendOrderToSheet(data) {
             valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.order_number)]] }
           });
         }
+        // Ship date was previously only set when the row was first created, so
+        // clearing (or changing) it in HubSpot afterward never reached the sheet.
+        // Unlike the other synced fields, this one must sync TO blank too -- a
+        // cleared ship date is a real, common edit, not a missing read.
+        if (String(infoRow[2] || '') !== String(data.ship_date || '')) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID, range: `Order Info!C${infoIdx + 1}`,
+            valueInputOption: 'USER_ENTERED', resource: { values: [[sheetSafe(data.ship_date || '')]] }
+          });
+        }
         // Keep the email column in sync with HubSpot -- previously only set when
         // the row was first created, so adding a second email to an existing deal
         // never reached the sheet no matter how many times this ran.

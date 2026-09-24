@@ -576,7 +576,7 @@ async function loadOrders() {
         const m = /^PO\s*#(\d+)/i.exec(o.deal_name || o.order_number || '');
         return m ? parseInt(m[1], 10) : null;
       };
-      currentOrders = currentOrders.filter(o => { const n = poNum(o); return n !== null && n >= 77 && n <= 95; });
+      currentOrders = currentOrders.filter(o => { const n = poNum(o); return n !== null && n >= 76 && n <= 95; });
     }
     if (currentUser.admin) document.getElementById('orders-club-name').textContent = currentOrders.length + ' orders (admin view)';
     if (!currentOrders.length) {

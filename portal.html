@@ -942,7 +942,8 @@ async function showOrder(idx) {
       // joined onto the description as plain text instead of a separate table.
       // Legacy rows with no dedicated Sizes column already have sizes embedded
       // in the description text, so item.sizes is blank and the join is a no-op.
-      const descText = [item.description || '', (item.sizes || '').trim()].filter(Boolean).join('\n');
+      const sizesText = (item.sizes || '').trim();
+      const descText = [item.description || '', sizesText ? 'Sizes: ' + sizesText : ''].filter(Boolean).join('\n');
       const priceHTML = item.orig_price && Number(item.orig_price) > 0
         ? `<span style="text-decoration:line-through; color:#aaa; display:block; font-size:12px;">${fmtMoney(item.orig_price)}</span><span>${fmtMoney(item.price)}</span>`
         : fmtMoney(item.price);

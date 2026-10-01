@@ -30,7 +30,11 @@ const escHtml = (v) => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(
 // Neutralize spreadsheet formula injection on any user value we write.
 function sheetSafe(v) {
   if (typeof v !== 'string') return v;
-  return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+  // Google Sheets' USER_ENTERED parser treats a fully-parenthesized number as
+  // accounting notation for a negative value -- "(207.00)" silently becomes
+  // the number -207 instead of staying the literal credit string we wrote
+  // (sample_reimbursement, commission). Force it to stay text.
+  return /^[=+\-@\t\r]|^\(\$?[\d,]+\.?\d*\)$/.test(v) ? `'${v}` : v;
 }
 
 // Order numbers are the lookup key everywhere below. A stray leading/trailing space

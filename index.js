@@ -61,7 +61,11 @@ const LOGO_PATH = __dirname + '/Mayor_Logo_transparent.png';
 // ---- /generate hardening (this endpoint is browser-reachable and writes to the sheet) ----
 // Also guards a leading-zero digit string (e.g. order number "092826") — Sheets'
 // USER_ENTERED auto-number conversion otherwise silently drops the zero (F/U 2026-09).
-function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]|^0\d/.test(v) ? `'${v}` : v; }
+// Google Sheets' USER_ENTERED parser treats a fully-parenthesized number as
+// accounting notation for a negative value -- "(207.00)" silently becomes
+// the number -207 instead of staying the literal credit string we wrote
+// (sample_reimbursement, commission). Force it to stay text.
+function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]|^0\d|^\(\$?[\d,]+\.?\d*\)$/.test(v) ? `'${v}` : v; }
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
 function normalizeOrderNumber(v) { return String(v || '').trim().replace(/\s+/g, ' '); }

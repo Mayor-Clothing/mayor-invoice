@@ -1067,7 +1067,7 @@ async function showOrder(idx) {
       ${artVal !== 0 ? totRow('Art Setup', artHTML) : ''}
       ${customLabelRow}
       ${commissionRow}
-      ${totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping))}
+      ${Number(d.shipping) ? totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping)) : ''}
       ${rushForTotal ? totRow('Expedited Order', fmtMoney(rushForTotal)) : ''}
       ${reimbRow}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}

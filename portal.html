@@ -1063,8 +1063,8 @@ async function showOrder(idx) {
 
     html += `<div style="margin-top:12px;">
       ${subtotalRow}
-      ${totRow('Embroidery', embHTML)}
-      ${totRow('Art Setup', artHTML)}
+      ${embVal > 0 ? totRow('Embroidery', embHTML) : ''}
+      ${artVal !== 0 ? totRow('Art Setup', artHTML) : ''}
       ${customLabelRow}
       ${commissionRow}
       ${totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping))}

@@ -908,7 +908,7 @@ async function showOrder(idx) {
     // instead of showing only the deposit, which left no way to pay the balance.
     const payRow = (label, url) => `<div class="detail-row"><span class="detail-key">${label}</span><span class="detail-val"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Click Here</a></span></div>`;
     if (safeUrl(d.payment_link) && safeUrl(d.payment_link_2)) {
-      infoEl.innerHTML += payRow('50% Deposit', safeUrl(d.payment_link)) + payRow('50% on Receipt', safeUrl(d.payment_link_2));
+      infoEl.innerHTML += payRow('Deposit', safeUrl(d.payment_link)) + payRow('Final Payment', safeUrl(d.payment_link_2));
     } else if (safeUrl(d.payment_link) || safeUrl(d.payment_link_2)) {
       infoEl.innerHTML += payRow('Payment', safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
     }

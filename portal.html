@@ -569,14 +569,10 @@ async function loadOrders() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     currentOrders = data.orders || [];
-    // TEMPORARY (Matt, 2026-09): admin view only shows PO #082-#094 for now.
-    // Remove this block to go back to showing every order.
+    // Admin view only shows deals that have a PO number in the deal name
+    // ("PO #058 - ..."), per Matt. Remove this block to show every order.
     if (currentUser.admin) {
-      const poNum = (o) => {
-        const m = /^PO\s*#(\d+)/i.exec(o.deal_name || o.order_number || '');
-        return m ? parseInt(m[1], 10) : null;
-      };
-      currentOrders = currentOrders.filter(o => { const n = poNum(o); return n !== null && n >= 29 && n <= 98; });
+      currentOrders = currentOrders.filter(o => /\bPO\s*#/i.test(o.deal_name || o.order_number || ''));
     }
     if (currentUser.admin) document.getElementById('orders-club-name').textContent = currentOrders.length + ' orders (admin view)';
     if (!currentOrders.length) {

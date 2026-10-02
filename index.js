@@ -28,7 +28,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use('/portal', portalRouter);
-app.get('/', (req, res) => res.redirect('/orders'));
+// Keep the query string through the redirect so direct order links
+// (/?order=Club/Order) and ?token=... links still reach the page intact.
+app.get('/', (req, res) => {
+  const q = req.originalUrl.indexOf('?');
+  res.redirect('/orders' + (q === -1 ? '' : req.originalUrl.slice(q)));
+});
 app.get('/mayor-logo.png', (req, res) => res.sendFile(path.join(__dirname, 'Mayor_Logo_transparent.png')));
 app.get('/auth-bg-1.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-1.png')));
 app.get('/auth-bg-2.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-2.png')));

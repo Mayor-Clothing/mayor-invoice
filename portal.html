@@ -584,6 +584,20 @@ async function loadOrders() {
       return;
     }
     sortAndRenderOrders();
+    // Deep link: ?order=Club-Name/Order-Number (e.g. ?order=TPC-Southwind/TPC-Southwind-I)
+    // jumps straight to that order's detail page after login, instead of the
+    // list -- lets Matt send a customer with many orders a link to just one.
+    // Only the part after the last "/" is matched, against each order number
+    // with case, accents and punctuation ignored; the club part is cosmetic.
+    // If more than one order matches, show the list rather than guess.
+    const orderSlug = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+      .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const linkedOrder = new URLSearchParams(window.location.search).get('order');
+    if (linkedOrder) {
+      const want = orderSlug(linkedOrder.split('/').pop());
+      const hits = want ? currentOrders.reduce((a, o, i) => (orderSlug(o.order_number) === want ? a.concat(i) : a), []) : [];
+      if (hits.length === 1) showOrder(hits[0]);
+    }
   } catch(e) {
     list.innerHTML = `<p style="color:#dc2626; font-size:13px;">${esc(e.message)}</p>`;
   }

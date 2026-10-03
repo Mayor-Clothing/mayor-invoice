@@ -384,11 +384,40 @@ const clubLines = (s) => String(s || '').split(' / ').map((x) => x.trim()).filte
 const clubHtml = (s) => clubLines(s).map(esc).join('<br>');
 // Keeps the address bar pointing at the order on screen (or the plain list), so
 // the URL can be copied to share and a refresh reopens what you were viewing.
-function setOrderUrl(o) {
+// mode 'push' adds a browser-history step (an order opened from the list, so the
+// browser's Back returns to the list); 'replace' rewrites the current step (a
+// shared link opened directly, sign-out).
+function setOrderUrl(o, mode = 'replace') {
   const q = o ? '?order=' + [urlSlug(clubLines(o.club)[0]), urlSlug(o.order_number)].filter(Boolean).join('/') : '';
-  try { history.replaceState(null, '', window.location.pathname + q); } catch (e) {}
+  const url = window.location.pathname + q;
+  try {
+    if (mode === 'push') history.pushState({ fromList: true }, '', url);
+    else history.replaceState({}, '', url);
+  } catch (e) {}
 }
-function backToOrders() { setOrderUrl(null); showPage('orders'); }
+// Index in currentOrders of the order a ?order=Club/Order link points at, or -1
+// (no match, or more than one -- show the list rather than guess).
+function linkedOrderIndex(param) {
+  const want = orderSlug(String(param || '').split('/').pop());
+  if (!want) return -1;
+  const hits = currentOrders.reduce((a, o, i) => (orderSlug(o.order_number) === want ? a.concat(i) : a), []);
+  return hits.length === 1 ? hits[0] : -1;
+}
+// An order opened from the list sits one browser-history step above it, so going
+// "back" is just the browser's Back. Anything else (a shared link opened
+// directly) has no list step behind it, so show the list in place.
+function backToOrders() {
+  if (history.state && history.state.fromList) { history.back(); return; }
+  setOrderUrl(null);
+  showPage('orders');
+}
+// The browser's Back/Forward buttons: show whichever order (or the list) the
+// address now points at.
+window.addEventListener('popstate', () => {
+  if (!currentUser || !currentOrders.length) return;
+  const idx = linkedOrderIndex(new URLSearchParams(window.location.search).get('order'));
+  if (idx !== -1) showOrder(idx, 'none'); else showPage('orders');
+});
 // Clicking the Mayor logo in the top bar returns to the main orders page. Signed
 // out, the link just reloads the site (which lands on the sign-in page).
 function goHome(e) {
@@ -609,11 +638,10 @@ async function loadOrders() {
     // Only the part after the last "/" is matched, against each order number
     // with case, accents and punctuation ignored; the club part is cosmetic.
     // If more than one order matches, show the list rather than guess.
-    const linkedOrder =new URLSearchParams(window.location.search).get('order');
+    const linkedOrder = new URLSearchParams(window.location.search).get('order');
     if (linkedOrder) {
-      const want = orderSlug(linkedOrder.split('/').pop());
-      const hits = want ? currentOrders.reduce((a, o, i) => (orderSlug(o.order_number) === want ? a.concat(i) : a), []) : [];
-      if (hits.length === 1) showOrder(hits[0]);
+      const idx = linkedOrderIndex(linkedOrder);
+      if (idx !== -1) showOrder(idx, 'replace');
     }
   } catch(e) {
     list.innerHTML = `<p style="color:#dc2626; font-size:13px;">${esc(e.message)}</p>`;
@@ -737,10 +765,12 @@ function parseCurrency(val) {
   return isNaN(n) ? 0 : n;
 }
 
-async function showOrder(idx) {
+// urlMode: 'push' (a click in the list -- adds a Back step), 'replace' (a shared
+// link opened directly) or 'none' (the browser's own Back/Forward already set it).
+async function showOrder(idx, urlMode = 'push') {
   currentOrder = currentOrders[idx];
   const o = currentOrder;
-  setOrderUrl(o);
+  if (urlMode !== 'none') setOrderUrl(o, urlMode);
 
   document.getElementById('detail-order-number').textContent = o.order_number;
   document.getElementById('detail-club').innerHTML = clubHtml(o.club);

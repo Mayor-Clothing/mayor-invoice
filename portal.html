@@ -386,10 +386,13 @@ let currentOrder = null;
 const urlSlug = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '')
   .replace(/['’]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const orderSlug = (s) => urlSlug(s).toLowerCase();
+// The Customer field can hold several names as "Name A / Name B" -- shown one per line.
+const clubLines = (s) => String(s || '').split(' / ').map((x) => x.trim()).filter(Boolean);
+const clubHtml = (s) => clubLines(s).map(esc).join('<br>');
 // Keeps the address bar pointing at the order on screen (or the plain list), so
 // the URL can be copied to share and a refresh reopens what you were viewing.
 function setOrderUrl(o) {
-  const q = o ? '?order=' + [urlSlug(o.club), urlSlug(o.order_number)].filter(Boolean).join('/') : '';
+  const q = o ? '?order=' + [urlSlug(clubLines(o.club)[0]), urlSlug(o.order_number)].filter(Boolean).join('/') : '';
   try { history.replaceState(null, '', window.location.pathname + q); } catch (e) {}
 }
 function backToOrders() { setOrderUrl(null); showPage('orders'); }
@@ -579,7 +582,7 @@ function safeUrl(u) {
 async function loadOrders() {
   showPage('orders');
   const _h1 = document.querySelector('#page-orders h1'); if (_h1) _h1.textContent = currentUser.admin ? 'All Orders' : 'Your Orders';
-  document.getElementById('orders-club-name').textContent = currentUser.admin ? 'Admin view — all orders' : (currentUser.club || '');
+  document.getElementById('orders-club-name').innerHTML = currentUser.admin ? 'Admin view — all orders' : clubHtml(currentUser.club);
   const list = document.getElementById('orders-list');
   list.innerHTML = '<p style="color:#888; font-size:13px;">Loading…</p>';
 
@@ -637,7 +640,7 @@ function sortAndRenderOrders() {
       <div class="order-row" onclick="showOrder(${i})">
         <div>
           <div class="order-title">${esc(o.order_number)}</div>
-          <div class="order-meta">${esc(o.club)}</div>
+          <div class="order-meta">${clubHtml(o.club)}</div>
         </div>
         <div class="order-right">
           ${currentUser.admin ? adminFlagBadges(o) : ''}
@@ -739,7 +742,7 @@ async function showOrder(idx) {
   setOrderUrl(o);
 
   document.getElementById('detail-order-number').textContent = o.order_number;
-  document.getElementById('detail-club').textContent = o.club;
+  document.getElementById('detail-club').innerHTML = clubHtml(o.club);
 
   // Per-order print background, when Matt/Marcus has one for this order --
   // sourced from the sheet's own Print Background column (a Shopify CDN URL,

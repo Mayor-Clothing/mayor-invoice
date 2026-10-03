@@ -196,7 +196,7 @@
 <body class="auth-fullbleed session-check">
 
 <nav>
-  <div class="nav-logo"><img src="/mayor-logo.png" alt="Mayor" style="height:36px;" /></div>
+  <div class="nav-logo"><a href="/orders" onclick="return goHome(event)" title="All orders" style="display:block; line-height:0;"><img src="/mayor-logo.png" alt="Mayor" style="height:36px;" /></a></div>
   <div class="nav-right" id="nav-right">
     <span id="nav-email"></span>
     <span id="nav-logout" style="display:none;"> · <a href="#" onclick="logout()">Sign out</a></span>
@@ -389,6 +389,14 @@ function setOrderUrl(o) {
   try { history.replaceState(null, '', window.location.pathname + q); } catch (e) {}
 }
 function backToOrders() { setOrderUrl(null); showPage('orders'); }
+// Clicking the Mayor logo in the top bar returns to the main orders page. Signed
+// out, the link just reloads the site (which lands on the sign-in page).
+function goHome(e) {
+  if (!currentUser) return true;
+  e.preventDefault();
+  backToOrders();
+  return false;
+}
 
 // ── PAGE ROUTING ──
 function togglePw(inputId, toggleId) {

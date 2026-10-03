@@ -66,31 +66,24 @@
   body.session-check .page { display: none !important; }
   .container { max-width: 680px; margin: 0 auto; padding: 2.5rem 1rem; }
   .container-wide { max-width: 900px; margin: 0 auto; padding: 2.5rem 1rem; }
-  /* These sit directly on the page background -- fixed black/white pattern is
-     one thing, but order-detail's background can become an arbitrary per-order
-     print swatch of unknown color/brightness. A translucent dark backdrop keeps
-     text legible regardless, instead of assuming "background is always dark". */
+  /* The page heading sits directly on the page background. On the black orders
+     list it's a see-through dark tint. */
   .page-heading { background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); border-radius: var(--radius-control); padding: 14px 18px; margin-bottom: 1.5rem; }
   .page-heading h1 { color: #fff; margin-bottom: 2px; }
   #orders-club-name, #detail-club { color: rgba(255,255,255,0.75); }
   .page-heading .back { color: rgba(255,255,255,0.75); margin-bottom: 10px; }
   .page-heading .back:hover { color: #fff; }
-  /* Sampled the swatch as light (most prints are white) -- flip to a frosted-glass
-     light chip with dark text instead of a dark box that reads as mismatched. */
-  .page-heading.on-light { background: rgba(255,255,255,0.65); }
-  .page-heading.on-light h1 { color: var(--foreground); }
-  .page-heading.on-light #detail-club { color: var(--muted-foreground); }
-  .page-heading.on-light .back { color: var(--muted-foreground); }
-  .page-heading.on-light .back:hover { color: var(--foreground); }
 
-  /* Same problem as .page-heading: this sits directly on the page background,
-     which can be a per-order swatch of any color. Plain gray fine print read
-     fine on the flat black default but visually collided with a light/busy
-     swatch pattern. */
-  .fine-print { background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); border-radius: var(--radius-control); padding: 10px 14px; }
-  .fine-print p { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75); line-height: 1.6; }
-  .fine-print.on-light { background: rgba(255,255,255,0.7); }
-  .fine-print.on-light p { color: var(--muted-foreground); }
+  /* Order detail page: the background there can be any per-order print, and a
+     see-through tint clashed with the white cards on dark prints. So the heading,
+     Payment Terms box and footer are solid white like the other cards. */
+  #page-detail .page-heading { background: var(--card); backdrop-filter: none; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  #page-detail .page-heading h1 { color: var(--foreground); }
+  #page-detail #detail-club { color: var(--muted-foreground); }
+  #page-detail .page-heading .back { color: var(--muted-foreground); }
+  #page-detail .page-heading .back:hover { color: var(--foreground); }
+  .fine-print { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-control); padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .fine-print p { font-size: 11px; font-weight: 600; color: var(--muted-foreground); line-height: 1.6; }
 
   /* CARDS */
   .card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
@@ -752,7 +745,6 @@ async function showOrder(idx) {
   // any previous order's background first so it doesn't linger while this one
   // loads or if this order has none.
   document.body.style.backgroundImage = '';
-  document.querySelectorAll('#page-detail .page-heading, #page-detail .fine-print').forEach(el => el.classList.remove('on-light'));
 
   // Kick off the order-detail fetch (the actual line items/totals) FIRST, with
   // an explicit high-priority hint, before touching the background at all --
@@ -880,14 +872,12 @@ async function showOrder(idx) {
       document.body.style.backgroundRepeat = 'no-repeat';
       document.body.style.backgroundPosition = 'center';
 
-      // Sample the swatch's average color -- used two ways: (1) light/dark
-      // heading-chip variant, since most prints are white and a fixed dark
-      // chip looked like a mismatched box, and (2) as the page's
+      // Sample the swatch's average color and use it as the page's
       // background-color fallback, so shrinking the image below "cover"
       // (to "zoom out" -- show more of the print's own internal repeat
       // instead of cropping in tight) exposes matching color at the edges
       // instead of a jarring black gap. This runs after the background is
-      // already visible, so it only ever refines the chip/edge color, never
+      // already visible, so it only ever refines the edge color, never
       // blocks the initial paint.
       const swatchProbe = new Image();
       swatchProbe.crossOrigin = 'anonymous'; // needed for canvas sampling on cross-origin (Shopify CDN) URLs
@@ -903,9 +893,7 @@ async function showOrder(idx) {
           for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i+1]; b += px[i+2]; }
           const n = px.length / 4;
           r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
-          const avgBrightness = (r + g + b) / 3;
           document.body.style.backgroundColor = `rgb(${r},${g},${b})`;
-          document.querySelectorAll('#page-detail .page-heading, #page-detail .fine-print').forEach(el => el.classList.toggle('on-light', avgBrightness > 180));
         } catch (e) {}
       };
       swatchProbe.src = bgUrl;

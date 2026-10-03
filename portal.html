@@ -39,7 +39,10 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #000 url('/auth-bg-1.png') top left/950px 297px repeat; color: var(--foreground); min-height: 100vh; }
-  body.detail-bg { background-image: url('/auth-bg-3.png'); background-size: 950px 295px; }
+  /* Default for an order with no print of its own: plain black, same as the orders
+     list. An order's print is applied as an inline style, which wins over this. The
+     size stays so a print tiles exactly as it always has. */
+  body.detail-bg { background-image: none; background-color: #000; background-size: 950px 295px; }
   body.orders-bg { background-image: none; background-color: #000; }
 
   /* NAV */

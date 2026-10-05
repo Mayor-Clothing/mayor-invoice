@@ -1122,11 +1122,11 @@ async function showOrder(idx, urlMode = 'push') {
       ${subtotalRow}
       ${embVal > 0 ? totRow('Embroidery', embHTML) : ''}
       ${artVal !== 0 ? totRow('Art Setup', artHTML) : ''}
+      ${rushForTotal ? totRow('Expedited Order', fmtMoney(rushForTotal)) : ''}
       ${reimbRow}
       ${customLabelRow}
       ${commissionRow}
       ${Number(d.shipping) ? totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping)) : ''}
-      ${rushForTotal ? totRow('Expedited Order', fmtMoney(rushForTotal)) : ''}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}
     </div>`;
 

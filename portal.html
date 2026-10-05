@@ -384,6 +384,14 @@ const orderSlug = (s) => urlSlug(s).toLowerCase();
 // The Customer field can hold several names as "Name A / Name B" -- shown one per line.
 const clubLines = (s) => String(s || '').split(' / ').map((x) => x.trim()).filter(Boolean);
 const clubHtml = (s) => clubLines(s).map(esc).join('<br>');
+// Browser-tab title: the site default everywhere, and "Order Number - Customer"
+// (e.g. "8715 - Palmetto Golf Club") on an individual order's page.
+const DEFAULT_TITLE = 'Mayor - My Orders';
+function orderTitle(o) {
+  const customer = clubLines(o.club).join(' / ');
+  const num = String(o.order_number || '').trim();
+  return num && customer ? `${num} - ${customer}` : (num || customer || DEFAULT_TITLE);
+}
 // Keeps the address bar pointing at the order on screen (or the plain list), so
 // the URL can be copied to share and a refresh reopens what you were viewing.
 // mode 'push' adds a browser-history step (an order opened from the list, so the
@@ -461,6 +469,7 @@ function formatShipDate(dateStr) {
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
+  if (name !== 'detail') document.title = DEFAULT_TITLE;
   document.body.classList.toggle('auth-fullbleed', name === 'login' || name === 'create-account' || name === 'forgot');
   document.body.classList.toggle('detail-bg', name === 'detail');
   document.body.classList.toggle('orders-bg', name === 'orders');
@@ -773,6 +782,7 @@ async function showOrder(idx, urlMode = 'push') {
   currentOrder = currentOrders[idx];
   const o = currentOrder;
   if (urlMode !== 'none') setOrderUrl(o, urlMode);
+  document.title = orderTitle(o);
 
   document.getElementById('detail-order-number').textContent = o.order_number;
   document.getElementById('detail-club').innerHTML = clubHtml(o.club);

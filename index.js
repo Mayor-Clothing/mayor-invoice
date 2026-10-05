@@ -35,6 +35,11 @@ app.get('/', (req, res) => {
   res.redirect('/orders' + (q === -1 ? '' : req.originalUrl.slice(q)));
 });
 app.get('/mayor-logo.png', (req, res) => res.sendFile(path.join(__dirname, 'Mayor_Logo_transparent.png')));
+// Browser-tab icon -- the same image mayorclothing.com uses. /favicon.ico is the
+// address browsers ask for by default, so serve the same file there too.
+const sendFavicon = (req, res) => res.type('image/gif').set('Cache-Control', 'public, max-age=86400').sendFile(path.join(__dirname, 'favicon.gif'));
+app.get('/favicon.gif', sendFavicon);
+app.get('/favicon.ico', sendFavicon);
 app.get('/auth-bg-1.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-1.png')));
 app.get('/auth-bg-2.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-2.png')));
 app.get('/auth-bg-3.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-3.png')));

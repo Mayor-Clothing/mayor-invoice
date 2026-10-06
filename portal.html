@@ -1113,9 +1113,10 @@ async function showOrder(idx, urlMode = 'push') {
     const artForTotal = d.strike_art ? 0 : artVal;
     const shipForTotal = d.strike_shipping ? 0 : (Number(d.shipping) || 0);
     const rushForTotal = Number(d.rush_fee) || 0;
+    const taxForTotal = Math.max(Number(d.sales_tax) || 0, 0);
     const effectiveTotal = d.total && Number(d.total) > 0
       ? Number(d.total)
-      : effectiveSubtotal + shipForTotal + customLabelVal + rushForTotal + embForTotal + artForTotal - reimbAmt - commissionAmt;
+      : effectiveSubtotal + shipForTotal + customLabelVal + rushForTotal + embForTotal + artForTotal + taxForTotal - reimbAmt - commissionAmt;
 
     const totalQty = (d.line_items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
 
@@ -1139,6 +1140,7 @@ async function showOrder(idx, urlMode = 'push') {
       ${customLabelRow}
       ${commissionRow}
       ${Number(d.shipping) ? totRow('Shipping', d.strike_shipping ? `<span style="${strikeStyle}">${fmtMoney(d.shipping)}</span>` : fmtMoney(d.shipping)) : ''}
+      ${taxForTotal > 0 ? totRow('Sales Tax', fmtMoney(taxForTotal)) : ''}
       ${totRow('Total', fmtMoney(effectiveTotal), true)}
     </div>`;
 

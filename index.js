@@ -161,6 +161,7 @@ async function appendOrderToSheet(data) {
       art_setup: (data.art_setup != null ? parseFloat(String(data.art_setup).replace(/[$,\s]/g,'')) || '' : ''),
       sample_reimbursement: data.sample_reimbursement || '', custom_label: data.custom_label || '', shipping: data.shipping || '', total: data.total || '',
       commission: data.commission || '',
+      sales_tax: data.sales_tax || '',
       payment_link: data.payment_link || '', payment_link_2: data.payment_link_2 || '',
       // '1' struck, '0' explicitly not struck, blank = caller never said (portal
       // falls back to the legacy default, portal.js strikeCell). Collapsing false
@@ -178,6 +179,7 @@ async function appendOrderToSheet(data) {
     // OC/Invoices, H on Order Info; order_number col: F on OC/Invoices, A on Order Info.
     async function writeToSheet(tabName, orderNumber, rowData) {
       const isInfo = tabName === 'Order Info';
+      if (!isInfo) await ensureGridWidth(sheets, tabName, rowData.length);
       const dealIdx = isInfo ? INFO_DEAL_COL : 0;
       const orderIdx = isInfo ? 0 : 5;
       const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${tabName}!A:H` });
@@ -260,6 +262,30 @@ async function appendOrderToSheet(data) {
     }
   } catch(e) {
     console.error('Sheet write failed:', e.message);
+  }
+}
+
+// The detail tabs must be as wide as the row written to them (see the matching
+// helper in mayor-email-backend/googleStore.js): widen by appending blank columns
+// on the right if the live tab is one short. Checked once per tab; never fatal.
+const _gridWidthChecked = new Set();
+async function ensureGridWidth(sheets, tab, needed) {
+  if (_gridWidthChecked.has(tab)) return;
+  try {
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(sheetId,title,gridProperties.columnCount)' });
+    const props = ((meta.data && meta.data.sheets) || []).map((s) => s.properties).find((pr) => pr && pr.title === tab);
+    if (!props) return;
+    const have = (props.gridProperties && props.gridProperties.columnCount) || 0;
+    if (have < needed) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        resource: { requests: [{ appendDimension: { sheetId: props.sheetId, dimension: 'COLUMNS', length: needed - have + 10 } }] },
+      });
+      console.log(`widened ${tab} from ${have} to ${needed + 10} columns`);
+    }
+    _gridWidthChecked.add(tab);
+  } catch (e) {
+    console.error('ensureGridWidth failed for', tab, e.message);
   }
 }
 

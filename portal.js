@@ -94,7 +94,17 @@ const _rangeCache = new Map();
 async function readRange(sheets, range) {
   const hit = _rangeCache.get(range);
   if (hit && Date.now() - hit.t < CACHE_TTL_MS) return hit.v;
-  const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+  let res;
+  try {
+    res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+  } catch (e) {
+    // The detail tabs are widened by the robot the first time it writes the newest
+    // column. Until then a read through CA can be past the tab's edge -- fall back
+    // to the old BZ limit (the newest column simply isn't there yet).
+    if (/:CA$/.test(range) && /grid limits|exceeds|out of range/i.test(String(e && e.message))) {
+      res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: range.replace(/CA$/, 'BZ') });
+    } else throw e;
+  }
   const rows = res.data.values || [];
   _rangeCache.set(range, { t: Date.now(), v: rows });
   return rows;
@@ -287,6 +297,7 @@ function parseSheetRow(row) {
     commission:        row[COL.commission] || null,
     custom_label:      row[COL.custom_label] ? parseCurrency(row[COL.custom_label]) : null,
     rush_fee:          row[COL.rush_fee] ? parseCurrency(row[COL.rush_fee]) : null,
+    sales_tax:         row[COL.sales_tax] ? parseCurrency(row[COL.sales_tax]) : null,
     shipping:          parseCurrency(row[COL.shipping]),
     total:             parseCurrency(row[COL.total]),
     payment_link:      row[COL.payment_link] || '',
@@ -310,8 +321,8 @@ async function getOrderDetailData(order_number) {
   const target = normalizeOrderNumber(order_number);
 
   const [invRows, confRows] = await Promise.all([
-    readRange(sheets, 'Invoices!A:BZ'),
-    readRange(sheets, 'Order Confirmations!A:BZ'),
+    readRange(sheets, 'Invoices!A:CA'),
+    readRange(sheets, 'Order Confirmations!A:CA'),
   ]);
   const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
   const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
@@ -525,10 +536,10 @@ router.get('/confirmation/:order_number', requireAuth, async (req, res) => {
     }
 
     const sheets = await getSheets();
-    // Full range through BZ — parseSheetRow reads fields (embroidery, payment_terms,
+    // Full range through CA — parseSheetRow reads fields (embroidery, payment_terms,
     // sizes, orig_price, drive_pdf_link, etc.) from columns well past the line
     // items; a narrower range silently dropped them from the PDF.
-    const confRows = await readRange(sheets, 'Order Confirmations!A:BZ');
+    const confRows = await readRange(sheets, 'Order Confirmations!A:CA');
     const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!confRow) return res.status(404).json({ error: 'Order confirmation not available.' });
 
@@ -560,7 +571,7 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
     // Only generate PDF from Invoices sheet (not confirmations)
     const sheets = await getSheets();
     // see comment on the Order Confirmations read above
-    const invRows = await readRange(sheets, 'Invoices!A:BZ');
+    const invRows = await readRange(sheets, 'Invoices!A:CA');
     const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!invRow) return res.status(404).json({ error: 'Invoice not available yet. Your order confirmation is still being reviewed.' });
 

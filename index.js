@@ -39,7 +39,11 @@ app.get('/mayor-logo.png', (req, res) => res.sendFile(path.join(__dirname, 'Mayo
 // address browsers ask for by default, so serve the same file there too.
 const sendFavicon = (req, res) => res.type('image/gif').set('Cache-Control', 'public, max-age=86400').sendFile(path.join(__dirname, 'favicon.gif'));
 app.get('/favicon.gif', sendFavicon);
-app.get('/favicon.ico', sendFavicon);
+// Black twin of favicon.gif for light browser themes (the page picks between them).
+const sendFaviconBlack = (req, res) => res.type('image/gif').set('Cache-Control', 'public, max-age=86400').sendFile(path.join(__dirname, 'favicon-black.gif'));
+app.get('/favicon-black.gif', sendFaviconBlack);
+// Bare /favicon.ico (no page to say which theme): black, the safe default on light tab strips.
+app.get('/favicon.ico', sendFaviconBlack);
 app.get('/auth-bg-1.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-1.png')));
 app.get('/auth-bg-2.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-2.png')));
 app.get('/auth-bg-3.png', (req, res) => res.sendFile(path.join(__dirname, 'auth-bg-3.png')));

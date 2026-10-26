@@ -753,7 +753,7 @@ const DEFAULT_W9 = 'https://drive.google.com/file/d/1iZD_sP2WQbfPrXkHIcPqf7XawDM
 // Mirrors the payment-terms text built server-side in doc-render.js so the
 // portal page and the PDF always read the same.
 function buildTermsHTML(d) {
-  const isSplitPayment = !!(safeUrl(d.payment_link_2));
+  const isSplitPayment = !!String(d.payment_link_2 || '').trim();
   // Always "customer" (matches doc-render.js / the downloaded PDF).
   const tail = 'Based on our custom model, garments are produced specially for each customer. Once customers approve their order, they are responsible for payment of its full value. There are no returns or exchanges. All sales are final. ';
   let termsText;
@@ -977,16 +977,25 @@ async function showOrder(idx, urlMode = 'push') {
     // Payment link (renamed from "Payment"/"Pay Invoice" per request). A 50/50
     // deal carries two links; label them the way the PDF does (doc-render.js)
     // instead of showing only the deposit, which left no way to pay the balance.
-    const payRow = (label, url) => `<div class="detail-row"><span class="detail-key">${label}</span><span class="detail-val"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Click Here</a></span></div>`;
-    if (safeUrl(d.payment_link) && safeUrl(d.payment_link_2)) {
-      infoEl.innerHTML += payRow('Deposit', safeUrl(d.payment_link)) + payRow('Final Payment', safeUrl(d.payment_link_2));
-    } else if (safeUrl(d.payment_link) || safeUrl(d.payment_link_2)) {
-      infoEl.innerHTML += payRow('Payment', safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
+    // The field can also hold plain text ("Paid by check #1042"): an https link shows
+    // as "Click Here"; anything else shows exactly as typed (never made clickable).
+    const payRow = (label, val) => {
+      const url = safeUrl(val);
+      const cell = url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:#1a1a18;">Click Here</a>`
+        : esc(val);
+      return `<div class="detail-row" style="align-items:flex-start; gap:24px;"><span class="detail-key" style="flex-shrink:0;">${label}</span><span class="detail-val" style="white-space:pre-line; text-align:right;">${cell}</span></div>`;
+    };
+    const payVals = [d.payment_link, d.payment_link_2].map((v) => String(v || '').trim()).filter(Boolean);
+    if (payVals.length > 1) {
+      infoEl.innerHTML += payRow('Deposit', payVals[0]) + payRow('Final Payment', payVals[1]);
+    } else if (payVals.length) {
+      infoEl.innerHTML += payRow('Payment', payVals[0]);
     }
 
     // Single smart download button: invoice if there's a payment link (order has
     // been invoiced), otherwise the order confirmation.
-    const hasPaymentLink = !!(safeUrl(d.payment_link) || safeUrl(d.payment_link_2));
+    const hasPaymentLink = payVals.length > 0;
     const downloadBtn = document.getElementById('detail-download-btn');
     downloadBtn.textContent = 'Download Invoice';
     downloadBtn.onclick = hasPaymentLink ? downloadInvoice : downloadConfirmation;

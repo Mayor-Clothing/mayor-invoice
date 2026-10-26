@@ -34,7 +34,7 @@ function sheetSafe(v) {
   // accounting notation for a negative value -- "(207.00)" silently becomes
   // the number -207 instead of staying the literal credit string we wrote
   // (sample_reimbursement, commission). Force it to stay text.
-  return /^[=+\-@\t\r]|^\(\$?[\d,]+\.?\d*\)$/.test(v) ? `'${v}` : v;
+  return /^[=+\-@\t\r]|^\(\$?[\d,]+\.?\d*\)$|^[A-Za-z]+ \d{1,2}, \d{4}$/.test(v) ? `'${v}` : v;
 }
 
 // Order numbers are the lookup key everywhere below. A stray leading/trailing space
@@ -99,10 +99,10 @@ async function readRange(sheets, range) {
     res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
   } catch (e) {
     // The detail tabs are widened by the robot the first time it writes the newest
-    // column. Until then a read through CA can be past the tab's edge -- fall back
+    // column. Until then a read through CB can be past the tab's edge -- fall back
     // to the old BZ limit (the newest column simply isn't there yet).
-    if (/:CA$/.test(range) && /grid limits|exceeds|out of range/i.test(String(e && e.message))) {
-      res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: range.replace(/CA$/, 'BZ') });
+    if (/:CB$/.test(range) && /grid limits|exceeds|out of range/i.test(String(e && e.message))) {
+      res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: range.replace(/CB$/, 'BZ') });
     } else throw e;
   }
   const rows = res.data.values || [];
@@ -298,6 +298,7 @@ function parseSheetRow(row) {
     custom_label:      row[COL.custom_label] ? parseCurrency(row[COL.custom_label]) : null,
     rush_fee:          row[COL.rush_fee] ? parseCurrency(row[COL.rush_fee]) : null,
     sales_tax:         row[COL.sales_tax] ? parseCurrency(row[COL.sales_tax]) : null,
+    invoice_date:      row[COL.invoice_date] || '',
     shipping:          parseCurrency(row[COL.shipping]),
     total:             parseCurrency(row[COL.total]),
     payment_link:      row[COL.payment_link] || '',
@@ -321,8 +322,8 @@ async function getOrderDetailData(order_number) {
   const target = normalizeOrderNumber(order_number);
 
   const [invRows, confRows] = await Promise.all([
-    readRange(sheets, 'Invoices!A:CA'),
-    readRange(sheets, 'Order Confirmations!A:CA'),
+    readRange(sheets, 'Invoices!A:CB'),
+    readRange(sheets, 'Order Confirmations!A:CB'),
   ]);
   const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
   const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
@@ -536,10 +537,10 @@ router.get('/confirmation/:order_number', requireAuth, async (req, res) => {
     }
 
     const sheets = await getSheets();
-    // Full range through CA — parseSheetRow reads fields (embroidery, payment_terms,
+    // Full range through CB — parseSheetRow reads fields (embroidery, payment_terms,
     // sizes, orig_price, drive_pdf_link, etc.) from columns well past the line
     // items; a narrower range silently dropped them from the PDF.
-    const confRows = await readRange(sheets, 'Order Confirmations!A:CA');
+    const confRows = await readRange(sheets, 'Order Confirmations!A:CB');
     const confRow = confRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!confRow) return res.status(404).json({ error: 'Order confirmation not available.' });
 
@@ -571,7 +572,7 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
     // Only generate PDF from Invoices sheet (not confirmations)
     const sheets = await getSheets();
     // see comment on the Order Confirmations read above
-    const invRows = await readRange(sheets, 'Invoices!A:CA');
+    const invRows = await readRange(sheets, 'Invoices!A:CB');
     const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
     if (!invRow) return res.status(404).json({ error: 'Invoice not available yet. Your order confirmation is still being reviewed.' });
 

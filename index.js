@@ -79,7 +79,7 @@ const LOGO_PATH = __dirname + '/Mayor_Logo_transparent.png';
 // accounting notation for a negative value -- "(207.00)" silently becomes
 // the number -207 instead of staying the literal credit string we wrote
 // (sample_reimbursement, commission). Force it to stay text.
-function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]|^0\d|^\(\$?[\d,]+\.?\d*\)$/.test(v) ? `'${v}` : v; }
+function sheetSafe(v) { if (typeof v !== 'string') return v; return /^[=+\-@\t\r]|^0\d|^\(\$?[\d,]+\.?\d*\)$|^[A-Za-z]+ \d{1,2}, \d{4}$/.test(v) ? `'${v}` : v; }
 // See matching comment in portal.js — order numbers are the lookup key for every
 // sheet write below; normalize so a stray space can't create a duplicate row.
 function normalizeOrderNumber(v) { return String(v || '').trim().replace(/\s+/g, ' '); }
@@ -166,6 +166,7 @@ async function appendOrderToSheet(data) {
       sample_reimbursement: data.sample_reimbursement || '', custom_label: data.custom_label || '', shipping: data.shipping || '', total: data.total || '',
       commission: data.commission || '',
       sales_tax: data.sales_tax || '',
+      invoice_date: data.invoice_date || '',
       payment_link: data.payment_link || '', payment_link_2: data.payment_link_2 || '',
       // '1' struck, '0' explicitly not struck, blank = caller never said (portal
       // falls back to the legacy default, portal.js strikeCell). Collapsing false

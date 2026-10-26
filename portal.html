@@ -853,7 +853,7 @@ async function showOrder(idx, urlMode = 'push') {
   // or ask UPS's API about it.
   const isHandDelivered = /^hand[\s-]?delivered$/i.test(String(o.tracking_number || '').trim());
   const trackingHTML = !o.tracking_number
-    ? `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val" style="color:#888;">Not yet available</span></div>`
+    ? `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val" style="color:#888;">Not available yet</span></div>`
     : isHandDelivered
     ? `<div class="detail-row"><span class="detail-key">Tracking</span><span class="detail-val">${esc(o.tracking_number)}</span></div>`
     : `<div class="detail-row"><span class="detail-key">Carrier</span><span class="detail-val">UPS</span></div>

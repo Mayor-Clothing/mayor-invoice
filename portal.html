@@ -389,6 +389,9 @@ const clubHtml = (s) => clubLines(s).map(esc).join('<br>');
 // Browser-tab title: the site default everywhere, and "Order Number - Customer"
 // (e.g. "8715 - Palmetto Golf Club") on an individual order's page.
 const DEFAULT_TITLE = 'Mayor - My Orders';
+// Per-order print backgrounds on the individual order pages are switched off for
+// now (every order page is the plain black one). Set to true to bring them back.
+const SHOW_PRINT_BACKGROUND = false;
 function orderTitle(o) {
   const customer = clubLines(o.club).join(' / ');
   const num = String(o.order_number || '').trim();
@@ -811,6 +814,7 @@ async function showOrder(idx, urlMode = 'push') {
   // background for any order using the local-file fallback (the common case
   // per Matt/Marcus), so it's usually already correct; the fetch above may
   // still overwrite it with a sheet-provided Shopify CDN URL once known.
+  if (SHOW_PRINT_BACKGROUND) {
   const optimisticBgUrl = `/swatches/${encodeURIComponent(o.order_number)}`;
   document.body.style.backgroundImage = `url('${optimisticBgUrl}')`;
   document.body.style.backgroundSize = 'cover';
@@ -831,6 +835,7 @@ async function showOrder(idx, urlMode = 'push') {
     document.body.style.backgroundPosition = '';
   };
   optimisticProbe.src = optimisticBgUrl;
+  }
 
   const badge = document.getElementById('detail-status-badge');
   badge.textContent = displayStatus(o.status);
@@ -907,7 +912,7 @@ async function showOrder(idx, urlMode = 'push') {
     // same-origin path (the local swatches/ fallback), not just an absolute
     // https URL -- safeUrl() alone would reject that.
     const bgUrl = /^\//.test(d.print_background || '') ? d.print_background : safeUrl(d.print_background);
-    if (bgUrl && currentOrder === o) {
+    if (SHOW_PRINT_BACKGROUND && bgUrl && currentOrder === o) {
       // Paint the background the moment the URL is known -- the browser starts
       // fetching/painting it right away via CSS. Previously this was set inside
       // swatchProbe.onload below, so the customer waited for a *second*,

@@ -94,11 +94,21 @@ function trustedPaymentLink(u) {
     return TRUSTED_PAYMENT_HOSTS.some((h) => host === h || host.endsWith('.' + h)) ? url.toString() : '';
   } catch (e) { return ''; }
 }
+// The payment field may hold plain text instead of a link ("Paid by check #1042"):
+// the order page shows it as typed, so the PDF must too. Anything that looks like a
+// link (has a "scheme://") still has to pass the trusted-host check above; text
+// without one is kept as text (the PDF only ever links https:// values), capped.
+function paymentValue(u) {
+  const s = String(u == null ? '' : u).trim();
+  if (!s) return '';
+  if (/^[a-z][a-z0-9+.\-]*:\/\//i.test(s)) return trustedPaymentLink(s);
+  return s.slice(0, 300);
+}
 function httpsUrlOrEmpty(u) { try { const url = new URL(String(u)); return url.protocol === 'https:' ? url.toString() : ''; } catch (e) { return ''; } }
 function sanitizeGeneratePayload(data) {
   const d = { ...(data || {}) };
-  d.payment_link = trustedPaymentLink(d.payment_link);
-  d.payment_link_2 = trustedPaymentLink(d.payment_link_2);
+  d.payment_link = paymentValue(d.payment_link);
+  d.payment_link_2 = paymentValue(d.payment_link_2);
   d.product_page = httpsUrlOrEmpty(d.product_page);
   d.line_items = (Array.isArray(d.line_items) ? d.line_items : []).slice(0, 10).map((it) => ({ ...(it || {}), url: httpsUrlOrEmpty(it && it.url), product_page: httpsUrlOrEmpty(it && it.product_page), mockup: httpsUrlOrEmpty(it && it.mockup) }));
   return d;

@@ -998,12 +998,15 @@ async function showOrder(idx, urlMode = 'push') {
       infoEl.innerHTML += payRow('Payment', payVals[0]);
     }
 
-    // Single smart download button: invoice if there's a payment link (order has
-    // been invoiced), otherwise the order confirmation.
-    const hasPaymentLink = payVals.length > 0;
+    // Single smart download button. Which document it gives is decided by what the
+    // order really has (the detail comes from the Invoices tab when an invoice
+    // exists, else Order Confirmations) -- NOT by the payment link: an invoice for an
+    // order paid by check/wire has no link and must still download as an invoice.
+    // The label says what you'll get.
+    const isInvoice = d.source === 'invoice';
     const downloadBtn = document.getElementById('detail-download-btn');
-    downloadBtn.textContent = 'Download Invoice';
-    downloadBtn.onclick = hasPaymentLink ? downloadInvoice : downloadConfirmation;
+    downloadBtn.textContent = isInvoice ? 'Download Invoice' : 'Download Order Confirmation';
+    downloadBtn.onclick = isInvoice ? downloadInvoice : downloadConfirmation;
     document.getElementById('detail-download-card').style.display = 'block';
 
     // Full payment terms, shown at the bottom of the page (mirrors doc-render.js)

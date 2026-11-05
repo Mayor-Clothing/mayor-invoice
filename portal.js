@@ -569,12 +569,16 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
       if (!orders.find(o => o.order_number === normalizeOrderNumber(req.params.order_number))) return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Only generate PDF from Invoices sheet (not confirmations)
+    // Always an invoice (Mayor no longer issues order confirmations). Built from the
+    // Invoices row; an order that only has an older Order Confirmations row is
+    // rendered from that row but still comes out as an invoice.
     const sheets = await getSheets();
     // see comment on the Order Confirmations read above
-    const invRows = await readRange(sheets, 'Invoices!A:CB');
-    const invRow = invRows.find(r => r[5] && normalizeOrderNumber(r[5]) === normalizeOrderNumber(req.params.order_number));
-    if (!invRow) return res.status(404).json({ error: 'Invoice not available yet. Your order confirmation is still being reviewed.' });
+    const target = normalizeOrderNumber(req.params.order_number);
+    const findRow = (rows) => rows.find(r => r[5] && normalizeOrderNumber(r[5]) === target);
+    let invRow = findRow(await readRange(sheets, 'Invoices!A:CB'));
+    if (!invRow) invRow = findRow(await readRange(sheets, 'Order Confirmations!A:CB'));
+    if (!invRow) return res.status(404).json({ error: 'Invoice not available.' });
 
     const invoiceData = parseSheetRow(invRow);
     const generateRes = await fetch('https://mayor-invoice.onrender.com/generate', {

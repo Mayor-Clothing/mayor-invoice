@@ -561,6 +561,17 @@ router.get('/confirmation/:order_number', requireAuth, async (req, res) => {
   }
 });
 
+// Download name: "Mayor - Invoice - <order> - <Customer>.pdf", or just "Mayor - Invoice - <order>.pdf"
+// when the order name already contains the customer's name (e.g. "Brownson Country Club I").
+// portal.html carries an identical copy between the BEGIN/END markers; portal.test.js checks they agree.
+function invoiceFileName(orderNumber, club) {
+  const bad = /[\\\/:*?"<>|\u0000-\u001f]/g;
+  const order = String(orderNumber == null ? '' : orderNumber).replace(bad, '-').replace(/\s+/g, ' ').trim();
+  const customer = String(club == null ? '' : club).split(/\s*\/\s*/).map((s) => s.replace(bad, '').trim()).filter(Boolean).join(' & ').replace(/\s+/g, ' ').trim();
+  const alreadyNamed = customer && order.toLowerCase().includes(customer.toLowerCase());
+  return ['Mayor', 'Invoice', order, alreadyNamed ? '' : customer].filter(Boolean).join(' - ') + '.pdf';
+}
+
 // Download invoice PDF — only works if invoice exists
 router.get('/invoice/:order_number', requireAuth, async (req, res) => {
   try {
@@ -589,7 +600,8 @@ router.get('/invoice/:order_number', requireAuth, async (req, res) => {
     if (!generateRes.ok) throw new Error('PDF generation failed: ' + await generateRes.text());
     const buffer = Buffer.from(await generateRes.arrayBuffer());
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="Mayor-Invoice-${req.params.order_number}.pdf"`);
+    const fileName = invoiceFileName(req.params.order_number, invoiceData.club);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
     res.send(buffer);
   } catch(e) {
     console.error('Invoice download error:', e.message);
@@ -609,4 +621,4 @@ router.post('/reorder', requireAuth, async (req, res) => {
   }
 });
 
-module.exports = { router, getOrdersFromSheet, swatchUrlFor };
+module.exports = { router, getOrdersFromSheet, swatchUrlFor, invoiceFileName };

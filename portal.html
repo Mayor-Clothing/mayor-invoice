@@ -1168,6 +1168,19 @@ async function showOrder(idx, urlMode = 'push') {
   }
 }
 
+// BEGIN invoiceFileName
+// Download name: "Mayor - Invoice - <order> - <Customer>.pdf", or just "Mayor - Invoice - <order>.pdf"
+// when the order name already contains the customer's name (e.g. "Brownson Country Club I").
+// portal.html carries an identical copy between the BEGIN/END markers; portal.test.js checks they agree.
+function invoiceFileName(orderNumber, club) {
+  const bad = /[\\\/:*?"<>|\u0000-\u001f]/g;
+  const order = String(orderNumber == null ? '' : orderNumber).replace(bad, '-').replace(/\s+/g, ' ').trim();
+  const customer = String(club == null ? '' : club).split(/\s*\/\s*/).map((s) => s.replace(bad, '').trim()).filter(Boolean).join(' & ').replace(/\s+/g, ' ').trim();
+  const alreadyNamed = customer && order.toLowerCase().includes(customer.toLowerCase());
+  return ['Mayor', 'Invoice', order, alreadyNamed ? '' : customer].filter(Boolean).join(' - ') + '.pdf';
+}
+// END invoiceFileName
+
 async function downloadInvoice() {
   if (!currentOrder) return;
   try {
@@ -1177,7 +1190,7 @@ async function downloadInvoice() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Mayor-Invoice-${currentOrder.order_number}.pdf`;
+    a.download = invoiceFileName(currentOrder.order_number, currentOrder.club);
     a.click();
   } catch(e) {
     alert('Could not download invoice: ' + e.message);
